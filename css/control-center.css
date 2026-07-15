@@ -229,6 +229,10 @@
   position: relative;
   height: 300px;
   margin-bottom: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px 10px;
 }
 
 .cc-chart-controls {
