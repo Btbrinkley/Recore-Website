@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Development &amp; Engineering | ReCore Technology</title>
+<meta name="description" content="How ReCore builds and field-tests Sentinel: an honest development journal, current milestones, and where the project stands today.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Development &amp; Engineering | ReCore Technology">
+<meta property="og:description" content="An honest look at how Sentinel is designed, built, and field-tested, including the first live telemetry record reaching Firestore.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0f1a">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<nav class="nav-wrap" aria-label="Primary">
+<a class="brand" href="index.html">
+<svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="5" fill="currentColor"/><line x1="20" y1="3" x2="20" y2="9" stroke="currentColor" stroke-width="2.5"/><line x1="34" y1="11.5" x2="28.5" y2="14.7" stroke="currentColor" stroke-width="2.5"/><line x1="6" y1="28.5" x2="11.5" y2="25.3" stroke="currentColor" stroke-width="2.5"/></svg>
+ReCore Technology
+</a>
+<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">&#9776;</button>
+<ul class="nav-links" id="primary-nav">
+<li><a href="index.html">Home</a></li>
+<li><a href="sentinel.html">Sentinel</a></li>
+<li><a href="platform.html">Platform</a></li>
+<li><a href="development.html" aria-current="page">Development</a></li>
+<li><a href="about.html">About</a></li>
+</ul>
+<a class="nav-cta" href="about.html#contact">Request a Demo</a>
+</nav>
+</header>
+<main id="main">
+<section class="page-hero">
+<div class="container">
+<p class="eyebrow">Development &amp; Engineering</p>
+<h1>Built in the open, tested on real equipment</h1>
+<p class="lead">ReCore and Sentinel are actively being designed and field-tested. This page tracks where things genuinely stand, updated as milestones are reached rather than as marketing copy.</p>
+</div>
+</section>
+<section class="section">
+<div class="container">
+<p class="eyebrow">How We're Building This</p>
+<h2>Build a working piece, test it for real, refine it</h2>
+<div class="two-col">
+<p>ReCore's development process is deliberately unglamorous: build a small working piece of the system, put it on real equipment, see what breaks or gets annoying, and refine it before adding the next piece. That is how the current Sentinel prototype came together, one working link at a time, from a Power Node reading a battery to a Hub relaying that reading to a phone or laptop on the same network.</p>
+<p>We test outside the lab bench on purpose. Real batteries, real weather, and real equipment expose problems that a bench test never will, whether that is a LoRa signal getting blocked by a metal shop wall or a Hub losing Wi-Fi mid-afternoon. Field testing is how we find those problems while the stakes are still low.</p>
+</div>
+</div>
+</section>
+<section class="section section-alt" id="milestones">
+<div class="container">
+<p class="eyebrow">Development Journal</p>
+<h2>Milestones so far</h2>
+<div class="timeline">
+<div class="timeline-item">
+<span class="status status-working">Working</span>
+<h3>Power Node prototype</h3>
+<p>Built and tested a battery-powered sensor node that reads voltage and temperature and transmits readings over LoRa.</p>
+</div>
+<div class="timeline-item">
+<span class="status status-working">Working</span>
+<h3>Sentinel Hub &amp; local dashboard</h3>
+<p>The Hub receives LoRa packets from a Power Node and serves a live dashboard on the local network, viewable without any internet connection.</p>
+</div>
+<div class="timeline-item">
+<span class="status status-working">Working</span>
+<h3>Cloud telemetry pipeline</h3>
+<p>Connected the Hub to an HTTPS Cloud Function that writes incoming readings into Firestore. The first live Sentinel telemetry record successfully reached Firestore during this phase, confirming the full Node-to-cloud path works end to end.</p>
+</div>
+<div class="timeline-item">
+<span class="status status-testing">In progress</span>
+<h3>Field testing</h3>
+<p>Running the complete Power Node to LoRa to Hub to local dashboard to Firestore path on real equipment, outside a lab bench, to find what needs to be more rugged before it becomes a product.</p>
+</div>
+<div class="timeline-item">
+<span class="status status-planned">Planned</span>
+<h3>Historical charts, alerts, accounts, cellular, production hardware</h3>
+<p>The next phase of work: cloud-side history and alerting, account login and device management, optional cellular connectivity, and production-ready hardware. None of this has started shipping yet.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="section">
+<div class="container">
+<p class="eyebrow">Why We're Sharing This</p>
+<h2>Transparency matters more than polish, right now</h2>
+<p style="max-width:70ch">ReCore is a small, founder-led project, and we would rather be precise about what works today than describe where we hope to be. This page will keep changing as milestones are actually reached, not on a fixed schedule. If you are evaluating ReCore as a prospective user, partner, or investor, we want that evaluation based on what is real.</p>
+<div class="btn-row">
+<a class="btn btn-primary" href="about.html#contact">Discuss Pilot Testing</a>
+<a class="btn btn-secondary" href="https://github.com/Btbrinkley/Recore-Website" target="_blank" rel="noopener">Follow on GitHub</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+<div class="container">
+<div class="footer-grid">
+<div class="footer-brand">
+<a class="brand" href="index.html">
+<svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="5" fill="currentColor"/><line x1="20" y1="3" x2="20" y2="9" stroke="currentColor" stroke-width="2.5"/><line x1="34" y1="11.5" x2="28.5" y2="14.7" stroke="currentColor" stroke-width="2.5"/><line x1="6" y1="28.5" x2="11.5" y2="25.3" stroke="currentColor" stroke-width="2.5"/></svg>
+ReCore Technology
+</a>
+<p>Modular monitoring and control systems for vehicles, equipment, farms, and remote assets. Sentinel is our first product line, currently in prototype and field-testing.</p>
+</div>
+<div class="footer-cols">
+<div class="footer-col">
+<h4>Site</h4>
+<ul>
+<li><a href="index.html">Home</a></li>
+<li><a href="sentinel.html">Sentinel</a></li>
+<li><a href="platform.html">Platform</a></li>
+<li><a href="development.html">Development</a></li>
+<li><a href="about.html">About &amp; Contact</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h4>Project</h4>
+<ul>
+<li><a href="https://github.com/Btbrinkley/Recore-Website" target="_blank" rel="noopener">GitHub Repository</a></li>
+<li><a href="development.html#milestones">Development Journal</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="footer-bottom">
+<span>&copy; <span data-year>2026</span> ReCore Technology. All rights reserved.</span>
+<span>Prototype &amp; field-testing stage.</span>
+</div>
+</div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>
