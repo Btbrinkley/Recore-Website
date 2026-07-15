@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel Remote Control Center | ReCore Technology</title>
+  <meta name="description" content="Remote monitoring dashboard for Sentinel field-test sites. Live telemetry, historical charts, and real-time alerts.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Sentinel Remote Control Center">
+  <meta property="og:description" content="Monitor Sentinel power nodes remotely from the cloud dashboard.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0f1a">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/control-center.css">
+  <!-- Chart.js for historical data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav-wrap" aria-label="Primary">
+      <a class="brand" href="index.html">
+        <img src="assets/logo.png" alt="ReCore Technology" class="brand-logo">
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">&#9776;</button>
+      <ul class="nav-links" id="primary-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="sentinel.html">Sentinel</a></li>
+        <li><a href="platform.html">Platform</a></li>
+        <li><a href="development.html">Development</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <a class="nav-cta" href="about.html#contact">Request a Demo</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Page header with status -->
+    <div class="cc-header">
+      <div class="container">
+        <div class="cc-header-top">
+          <div class="cc-title">
+            <h1>Sentinel Remote Control Center</h1>
+            <div class="cc-badges">
+              <span class="cc-status-badge cc-status-proto">
+                Prototype
+              </span>
+              <span class="cc-status-badge" id="dataModeBadge">
+                Loading...
+              </span>
+            </div>
+          </div>
+          <div class="cc-header-meta">
+            <div class="cc-header-meta-item">
+              <span class="cc-header-meta-label">Cloud Connection</span>
+              <span class="cc-header-meta-value" id="cloudStatus">Checking...</span>
+            </div>
+            <div class="cc-header-meta-item">
+              <span class="cc-header-meta-label">Last Refresh</span>
+              <span class="cc-header-meta-value" id="lastRefresh">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device navigation -->
+        <div class="cc-nav-bar">
+          <div class="cc-nav-item">
+            <span class="cc-nav-label">Site</span>
+            <span class="cc-nav-value" id="siteDisplay">—</span>
+          </div>
+          <div class="cc-nav-item">
+            <span class="cc-nav-label">Hub</span>
+            <span class="cc-nav-value" id="hubDisplay">—</span>
+          </div>
+          <div class="cc-nav-item">
+            <span class="cc-nav-label">Node</span>
+            <span class="cc-nav-value" id="nodeDisplay">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="section">
+      <div class="container">
+        <!-- State messages -->
+        <div id="stateMessages"></div>
+
+        <!-- Current Status Cards -->
+        <h2 class="cc-section-title">Current Status</h2>
+        <div class="cc-grid">
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">Battery Voltage</div>
+            <div class="cc-metric-value"><span id="voltageValue">—</span><span class="cc-metric-unit">V</span></div>
+            <div class="cc-metric-status" id="voltageStatus"></div>
+          </div>
+
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">Battery Temperature</div>
+            <div class="cc-metric-value"><span id="tempValue">—</span><span class="cc-metric-unit">°F</span></div>
+            <div class="cc-metric-status" id="tempStatus"></div>
+          </div>
+
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">Battery Condition</div>
+            <div class="cc-metric-value" id="healthValue">—</div>
+            <div class="cc-metric-status" id="healthStatus"></div>
+          </div>
+
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">LoRa RSSI</div>
+            <div class="cc-metric-value"><span id="rssiValue">—</span><span class="cc-metric-unit">dBm</span></div>
+            <div class="cc-metric-status" id="rssiStatus"></div>
+          </div>
+
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">Last Report</div>
+            <div class="cc-metric-value" style="font-size: 1.1rem;" id="lastReportTime">—</div>
+            <div class="cc-metric-status" id="reportStatus"></div>
+          </div>
+
+          <div class="cc-metric-card">
+            <div class="cc-metric-label">Node Status</div>
+            <div class="cc-metric-value" style="font-size: 1.1rem;" id="nodeStatusText">—</div>
+            <div class="cc-metric-status cc-metric-status-offline" id="nodeOnlineStatus"></div>
+          </div>
+        </div>
+
+        <!-- Historical Chart -->
+        <h2 class="cc-section-title">Historical Data</h2>
+        <div class="cc-chart-container">
+          <div class="cc-chart-controls">
+            <button class="cc-range-btn active" data-range="24h">24 Hours</button>
+            <button class="cc-range-btn" data-range="7d">7 Days</button>
+            <button class="cc-range-btn" data-range="30d">30 Days</button>
+          </div>
+          <div class="cc-chart">
+            <canvas id="historyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Range Summary -->
+        <h2 class="cc-section-title">Selected Range Summary</h2>
+        <div class="cc-summary-grid">
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Min Voltage</div>
+            <div class="cc-summary-value"><span id="summaryMinVoltage">—</span>V</div>
+          </div>
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Max Voltage</div>
+            <div class="cc-summary-value"><span id="summaryMaxVoltage">—</span>V</div>
+          </div>
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Min Temperature</div>
+            <div class="cc-summary-value"><span id="summaryMinTemp">—</span>°F</div>
+          </div>
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Max Temperature</div>
+            <div class="cc-summary-value"><span id="summaryMaxTemp">—</span>°F</div>
+          </div>
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Reading Count</div>
+            <div class="cc-summary-value" id="summaryCount">—</div>
+          </div>
+          <div class="cc-summary-item">
+            <div class="cc-summary-label">Range</div>
+            <div class="cc-summary-value" id="summaryRange">—</div>
+          </div>
+        </div>
+
+        <!-- Remote Controls (Disabled) -->
+        <h2 class="cc-section-title">Remote Control</h2>
+        <div class="cc-controls-panel">
+          <div class="cc-controls-header">
+            <h3>Node Commands</h3>
+            <span class="cc-dev-badge">In Development</span>
+          </div>
+          <div class="cc-controls-grid">
+            <div class="cc-control-item">
+              <label class="cc-control-label">Request Reading Now</label>
+              <button class="cc-control-btn" disabled title="In development">Request</button>
+            </div>
+            <div class="cc-control-item">
+              <label class="cc-control-label">Change Sample Interval</label>
+              <button class="cc-control-btn" disabled title="In development">Configure</button>
+            </div>
+            <div class="cc-control-item">
+              <label class="cc-control-label">Set Voltage Thresholds</label>
+              <button class="cc-control-btn" disabled title="In development">Set Limits</button>
+            </div>
+            <div class="cc-control-item">
+              <label class="cc-control-label">Restart Node</label>
+              <button class="cc-control-btn" disabled title="In development">Restart</button>
+            </div>
+            <div class="cc-control-item">
+              <label class="cc-control-label">Configure Alerts</label>
+              <button class="cc-control-btn" disabled title="In development">Configure</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="3" fill="currentColor"/></svg>
+            ReCore Technology
+          </a>
+          <p>Modular monitoring and control systems for vehicles, equipment, farms, and remote assets. Sentinel is our first product line, currently in prototype and field-testing.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Site</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="sentinel.html">Sentinel</a></li>
+              <li><a href="platform.html">Platform</a></li>
+              <li><a href="development.html">Development</a></li>
+              <li><a href="about.html">About &amp; Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Project</h4>
+            <ul>
+              <li><a href="https://github.com/Btbrinkley/Recore-Website" target="_blank" rel="noopener">GitHub Repository</a></li>
+              <li><a href="development.html#milestones">Development Journal</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; <span data-year>2026</span> ReCore Technology. All rights reserved.</span>
+        <span>Prototype &amp; field-testing stage.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Configuration: Set before loading scripts -->
+  <script>
+    // Example configuration (replace with your actual API endpoint)
+    window.SENTINEL_CONFIG = {
+      apiUrl: '', // Set to your API base URL when live
+      useMockData: true, // Set to false when connected to live API
+      onlineTimeoutMs: 300000, // 5 minutes
+      liveRefreshIntervalMs: 30000, // 30 seconds
+    };
+  </script>
+
+  <!-- Load dependencies in order -->
+  <script src="js/main.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sentinel-mock.js"></script>
+  <script src="js/sentinel-api.js"></script>
+  <script src="js/control-center.js"></script>
+</body>
+</html>
