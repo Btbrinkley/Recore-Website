@@ -4,7 +4,7 @@ Public marketing website for ReCore Technology, a founder-led project building m
 
 ## Status
 
-This is a static, mostly-static marketing site. It is currently in prototype and field-testing stage, same as the Sentinel hardware it describes. No login, no live Firestore access, and no Firebase credentials are included in this site.
+This is a static marketing site. It is currently in prototype and field-testing stage, same as the Sentinel hardware it describes. No login, no live Firestore access, and no Firebase credentials are included in this site.
 
 ## Structure
 
