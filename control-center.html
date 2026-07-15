@@ -239,12 +239,12 @@
     </div>
   </footer>
 
-  <!-- Configuration: Set before loading scripts -->
+  <!-- Configuration: Live API endpoint -->
   <script>
-    // Example configuration (replace with your actual API endpoint)
+    // Live API configuration
     window.SENTINEL_CONFIG = {
-      apiUrl: '', // Set to your API base URL when live
-      useMockData: true, // Set to false when connected to live API
+      apiUrl: 'https://us-central1-sentinel-74f28.cloudfunctions.net',
+      useMockData: false,
       onlineTimeoutMs: 300000, // 5 minutes
       liveRefreshIntervalMs: 30000, // 30 seconds
     };
