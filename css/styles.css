@@ -33,7 +33,7 @@ p{margin:0 0 1em;color:var(--text-muted);}
 .skip-link:focus{left:16px;top:16px;}
 .nav-wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:var(--maxw);margin:0 auto;}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--text);}
-.brand svg{width:32px;height:32px;flex-shrink:0;}
+.brand-logo{height:38px;width:auto;display:block;}
 .nav-links{display:flex;gap:28px;list-style:none;margin:0;padding:0;}
 .nav-links a{text-decoration:none;color:var(--text-muted);font-weight:600;font-size:.95rem;padding:6px 2px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
 .nav-links a:hover,.nav-links a[aria-current="page"]{color:var(--text);border-color:var(--accent);}
