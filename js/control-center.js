@@ -228,6 +228,29 @@
     el.summaryRange.textContent = data.range || '—';
   }
 
+
+  // ===== Chart Visual Plugins =====
+  // Draws a thin vertical guide line through the active hover point,
+  // similar to a cursor readout on lab/telemetry instruments.
+  const verticalHoverLinePlugin = {
+    id: 'verticalHoverLine',
+    afterDatasetsDraw(chart) {
+      const active = chart.getActiveElements();
+      if (!active || !active.length) return;
+      const { ctx, chartArea } = chart;
+      const x = active[0].element.x;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(231, 235, 243, 0.35)';
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.restore();
+    },
+  };
+
   // ===== Chart Rendering =====
   function renderChart(data) {
     if (!data || !data.readings || data.readings.length === 0) {
@@ -258,31 +281,41 @@
           {
             label: 'Voltage (V)',
             data: voltages,
-            borderColor: 'var(--accent)',
-            backgroundColor: 'rgba(242, 165, 48, 0.05)',
+            borderColor: '#f2a530',
+            backgroundColor: 'rgba(242, 165, 48, 0.08)',
             borderWidth: 2,
             pointRadius: 0,
-            pointHoverRadius: 5,
-            pointBackgroundColor: 'var(--accent)',
-            tension: 0.1,
+            pointHoverRadius: 4,
+            pointHitRadius: 12,
+            pointBackgroundColor: '#f2a530',
+            pointHoverBackgroundColor: '#f2a530',
+            pointHoverBorderColor: '#0a0f1a',
+            pointHoverBorderWidth: 2,
+            tension: 0,
             yAxisID: 'y',
             fill: false,
           },
           {
             label: 'Temperature (°F)',
             data: temperatures,
-            borderColor: 'var(--accent-2)',
-            backgroundColor: 'rgba(91, 141, 201, 0.05)',
+            borderColor: '#5b8dc9',
+            backgroundColor: 'rgba(91, 141, 201, 0.08)',
             borderWidth: 2,
+            borderDash: [6, 3],
             pointRadius: 0,
-            pointHoverRadius: 5,
-            pointBackgroundColor: 'var(--accent-2)',
-            tension: 0.1,
+            pointHoverRadius: 4,
+            pointHitRadius: 12,
+            pointBackgroundColor: '#5b8dc9',
+            pointHoverBackgroundColor: '#5b8dc9',
+            pointHoverBorderColor: '#0a0f1a',
+            pointHoverBorderWidth: 2,
+            tension: 0,
             yAxisID: 'y1',
             fill: false,
           },
         ],
       },
+      plugins: [verticalHoverLinePlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -290,31 +323,43 @@
           mode: 'index',
           intersect: false,
         },
-        animation: {
-          duration: 0, // Disable animation for snappy updates
+        hover: {
+          mode: 'index',
+          intersect: false,
         },
         plugins: {
           legend: {
             display: true,
             position: 'top',
+            align: 'end',
             labels: {
-              color: 'var(--text)',
+              color: '#e7ebf3',
               font: {
                 size: 12,
                 weight: '600',
               },
-              padding: 12,
+              padding: 16,
               usePointStyle: true,
+              pointStyle: 'line',
+              boxWidth: 24,
             },
           },
           tooltip: {
-            backgroundColor: 'rgba(10, 15, 26, 0.9)',
-            titleColor: 'var(--text)',
-            bodyColor: 'var(--text-muted)',
-            borderColor: 'var(--border)',
+            enabled: true,
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(10, 15, 26, 0.95)',
+            titleColor: '#e7ebf3',
+            bodyColor: '#93a3bf',
+            borderColor: '#25334d',
             borderWidth: 1,
-            padding: 10,
+            padding: 12,
+            cornerRadius: 6,
             displayColors: true,
+            usePointStyle: true,
+            boxPadding: 4,
+            titleFont: { size: 12, weight: '700' },
+            bodyFont: { size: 12 },
             callbacks: {
               title: function(context) {
                 if (context.length > 0) {
@@ -325,10 +370,13 @@
               label: function(context) {
                 let label = context.dataset.label || '';
                 if (context.parsed.y !== null) {
-                  const value = Number(context.parsed.y).toFixed(
-                    context.dataset.yAxisID === 'y' ? 2 : 1
-                  );
-                  label += ': ' + value;
+                  if (label.indexOf('Voltage') !== -1) {
+                    label += ': ' + context.parsed.y.toFixed(2) + ' V';
+                  } else if (label.indexOf('Temperature') !== -1) {
+                    label += ': ' + context.parsed.y.toFixed(1) + ' °F';
+                  } else {
+                    label += ': ' + context.parsed.y;
+                  }
                 }
                 return label;
               },
@@ -339,11 +387,18 @@
           x: {
             display: true,
             grid: {
-              color: 'var(--border)',
+              color: 'rgba(147, 163, 191, 0.08)',
+              tickColor: 'rgba(147, 163, 191, 0.2)',
+            },
+            border: {
+              color: 'rgba(147, 163, 191, 0.25)',
             },
             ticks: {
-              color: 'var(--text-muted)',
-              font: { size: 11 },
+              color: '#93a3bf',
+              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 8,
             },
             type: 'time',
             time: {
@@ -361,15 +416,21 @@
             title: {
               display: true,
               text: 'Voltage (V)',
-              color: 'var(--accent)',
-              font: { weight: 'bold' },
+              color: '#f2a530',
+              font: { weight: 'bold', size: 12 },
             },
             grid: {
-              color: 'var(--border)',
+              color: 'rgba(147, 163, 191, 0.08)',
+            },
+            border: {
+              color: 'rgba(147, 163, 191, 0.25)',
             },
             ticks: {
-              color: 'var(--text-muted)',
-              font: { size: 11 },
+              color: '#93a3bf',
+              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
+              callback: function(value) {
+                return Number(value).toFixed(2);
+              },
             },
           },
           y1: {
@@ -379,15 +440,21 @@
             title: {
               display: true,
               text: 'Temperature (°F)',
-              color: 'var(--accent-2)',
-              font: { weight: 'bold' },
+              color: '#5b8dc9',
+              font: { weight: 'bold', size: 12 },
             },
             grid: {
               drawOnChartArea: false,
             },
+            border: {
+              color: 'rgba(147, 163, 191, 0.25)',
+            },
             ticks: {
-              color: 'var(--text-muted)',
-              font: { size: 11 },
+              color: '#93a3bf',
+              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
+              callback: function(value) {
+                return Number(value).toFixed(1);
+              },
             },
           },
         },
