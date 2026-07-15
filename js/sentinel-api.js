@@ -69,7 +69,7 @@ const SentinelAPI = (() => {
 
   /**
    * Validate latest response structure
-   * Accepts null for temperatureF
+   * Accepts null or undefined for temperatureF
    * @private
    */
   function validateLatestResponse(data) {
@@ -80,14 +80,15 @@ const SentinelAPI = (() => {
       throw new Error('Response missing "latest" field');
     }
 
-    const temperatureValid =
-      typeof data.latest.temperatureF === 'number' ||
-      data.latest.temperatureF === null;
+    const validTemperature =
+      data.latest.temperatureF === null ||
+      data.latest.temperatureF === undefined ||
+      typeof data.latest.temperatureF === 'number';
 
     if (
       typeof data.latest.voltage !== 'number' ||
-      !temperatureValid ||
-      typeof data.latest.recordedAt !== 'string'
+      typeof data.latest.recordedAt !== 'string' ||
+      !validTemperature
     ) {
       throw new Error('Latest response missing required fields');
     }
@@ -95,8 +96,9 @@ const SentinelAPI = (() => {
   }
 
   /**
-   * Validate history response structure
-   * Accepts null for temperatureF in readings
+   * Validate and sanitize history response structure
+   * Accepts null or undefined for temperatureF in readings
+   * Filters out invalid readings rather than rejecting the entire response
    * @private
    */
   function validateHistoryResponse(data) {
@@ -106,19 +108,17 @@ const SentinelAPI = (() => {
     if (!Array.isArray(data.readings)) {
       throw new Error('Response missing "readings" array');
     }
-    data.readings.forEach((reading, i) => {
-      const temperatureValid =
-        typeof reading.temperatureF === 'number' ||
-        reading.temperatureF === null;
 
-      if (
-        typeof reading.voltage !== 'number' ||
-        !temperatureValid ||
-        typeof reading.recordedAt !== 'string'
-      ) {
-        throw new Error(`Reading ${i} missing required fields`);
-      }
+    // Filter out invalid readings, keep valid ones
+    // Valid reading: has voltage (number) and recordedAt (string)
+    // Temperature can be null, undefined, or number
+    data.readings = data.readings.filter(reading => {
+      return (
+        typeof reading.voltage === 'number' &&
+        typeof reading.recordedAt === 'string'
+      );
     });
+
     return data;
   }
 
