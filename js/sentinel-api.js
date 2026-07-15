@@ -69,6 +69,7 @@ const SentinelAPI = (() => {
 
   /**
    * Validate latest response structure
+   * Accepts null for temperatureF
    * @private
    */
   function validateLatestResponse(data) {
@@ -78,9 +79,14 @@ const SentinelAPI = (() => {
     if (!data.latest || typeof data.latest !== 'object') {
       throw new Error('Response missing "latest" field');
     }
+
+    const temperatureValid =
+      typeof data.latest.temperatureF === 'number' ||
+      data.latest.temperatureF === null;
+
     if (
       typeof data.latest.voltage !== 'number' ||
-      typeof data.latest.temperatureF !== 'number' ||
+      !temperatureValid ||
       typeof data.latest.recordedAt !== 'string'
     ) {
       throw new Error('Latest response missing required fields');
@@ -90,6 +96,7 @@ const SentinelAPI = (() => {
 
   /**
    * Validate history response structure
+   * Accepts null for temperatureF in readings
    * @private
    */
   function validateHistoryResponse(data) {
@@ -100,9 +107,13 @@ const SentinelAPI = (() => {
       throw new Error('Response missing "readings" array');
     }
     data.readings.forEach((reading, i) => {
+      const temperatureValid =
+        typeof reading.temperatureF === 'number' ||
+        reading.temperatureF === null;
+
       if (
         typeof reading.voltage !== 'number' ||
-        typeof reading.temperatureF !== 'number' ||
+        !temperatureValid ||
         typeof reading.recordedAt !== 'string'
       ) {
         throw new Error(`Reading ${i} missing required fields`);
