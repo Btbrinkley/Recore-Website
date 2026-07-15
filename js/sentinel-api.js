@@ -76,22 +76,31 @@ const SentinelAPI = (() => {
     if (!data || typeof data !== 'object') {
       throw new Error('Latest response is not an object');
     }
+
     if (!data.latest || typeof data.latest !== 'object') {
       throw new Error('Response missing "latest" field');
     }
 
+    const validVoltage =
+      typeof data.latest.voltage === 'number' &&
+      Number.isFinite(data.latest.voltage);
+
     const validTemperature =
       data.latest.temperatureF === null ||
       data.latest.temperatureF === undefined ||
-      typeof data.latest.temperatureF === 'number';
+      (
+        typeof data.latest.temperatureF === 'number' &&
+        Number.isFinite(data.latest.temperatureF)
+      );
 
-    if (
-      typeof data.latest.voltage !== 'number' ||
-      typeof data.latest.recordedAt !== 'string' ||
-      !validTemperature
-    ) {
+    const validTimestamp =
+      typeof data.latest.recordedAt === 'string' &&
+      !Number.isNaN(Date.parse(data.latest.recordedAt));
+
+    if (!validVoltage || !validTemperature || !validTimestamp) {
       throw new Error('Latest response missing required fields');
     }
+
     return data;
   }
 
@@ -105,18 +114,37 @@ const SentinelAPI = (() => {
     if (!data || typeof data !== 'object') {
       throw new Error('History response is not an object');
     }
+
     if (!Array.isArray(data.readings)) {
       throw new Error('Response missing "readings" array');
     }
 
-    // Filter out invalid readings, keep valid ones
-    // Valid reading: has voltage (number) and recordedAt (string)
-    // Temperature can be null, undefined, or number
-    data.readings = data.readings.filter(reading => {
-      return (
+    data.readings = data.readings.filter((reading, i) => {
+      const validVoltage =
         typeof reading.voltage === 'number' &&
-        typeof reading.recordedAt === 'string'
-      );
+        Number.isFinite(reading.voltage);
+
+      const validTemperature =
+        reading.temperatureF === null ||
+        reading.temperatureF === undefined ||
+        (
+          typeof reading.temperatureF === 'number' &&
+          Number.isFinite(reading.temperatureF)
+        );
+
+      const validTimestamp =
+        typeof reading.recordedAt === 'string' &&
+        !Number.isNaN(Date.parse(reading.recordedAt));
+
+      if (!validVoltage || !validTemperature || !validTimestamp) {
+        console.warn(
+          `[Sentinel API] Skipping malformed history reading ${i}`,
+          reading
+        );
+        return false;
+      }
+
+      return true;
     });
 
     return data;
