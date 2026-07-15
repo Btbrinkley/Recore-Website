@@ -13,18 +13,10 @@
   const injected = window.SENTINEL_CONFIG || {};
 
   window.SENTINEL_CONFIG = {
-    // API base URL (must include protocol and domain, no trailing slash)
-    // Example: https://api.recore.example.com/v1
-    apiUrl: injected.apiUrl || '',
-
-    // Enable mock data for development/demo
-    useMockData: injected.useMockData === 'true' || injected.useMockData === true,
-
-    // Online timeout: consider node offline if no reading in this many milliseconds
-    onlineTimeoutMs: injected.onlineTimeoutMs || 300000, // 5 minutes
-
-    // Refresh interval for live data (milliseconds)
-    liveRefreshIntervalMs: injected.liveRefreshIntervalMs || 30000, // 30 seconds
+  apiUrl: 'https://us-central1-sentinel-74f28.cloudfunctions.net',
+  useMockData: false,
+  onlineTimeoutMs: 300000,
+  liveRefreshIntervalMs: 30000,
 
     // Default field-test identifiers
     defaultSiteId: 'spitfire',
