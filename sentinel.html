@@ -1,176 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentinel | ReCore Technology</title>
-<meta name="description" content="Sentinel is ReCore's first product line: battery voltage and temperature monitoring with a LoRa sensor node, a local hub, a local dashboard, and cloud telemetry.">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<meta property="og:title" content="Sentinel | ReCore Technology">
-<meta property="og:description" content="Battery and equipment monitoring built for real conditions, currently in prototype and field-testing.">
-<meta property="og:type" content="website">
-<meta name="theme-color" content="#0a0f1a">
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel | ReCore Technology</title>
+  <meta name="description" content="Sentinel is ReCore's first product line: battery voltage and temperature monitoring with a LoRa sensor node, a local hub, a local dashboard, and cloud telemetry.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Sentinel | ReCore Technology">
+  <meta property="og:description" content="Battery and equipment monitoring built for real conditions, currently in prototype and field-testing.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0f1a">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header">
-<nav class="nav-wrap" aria-label="Primary">
-<a class="brand" href="index.html">
-<img src="assets/logo.png" alt="ReCore Technology" class="brand-logo">
-</a>
-<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">&#9776;</button>
-<ul class="nav-links" id="primary-nav">
-<li><a href="index.html">Home</a></li>
-<li><a href="sentinel.html" aria-current="page">Sentinel</a></li>
-<li><a href="platform.html">Platform</a></li>
-<li><a href="development.html">Development</a></li>
-<li><a href="about.html">About</a></li>
-</ul>
-<a class="nav-cta" href="about.html#contact">Request a Demo</a>
-</nav>
-</header>
-<main id="main">
-<section class="page-hero">
-<div class="container">
-<p class="eyebrow">Sentinel</p>
-<h1>Battery and equipment monitoring you do not have to think about</h1>
-<p class="lead">Sentinel is ReCore's first product line. It watches battery voltage and temperature so equipment does not get discovered dead, and it is currently in prototype and field-testing.</p>
-</div>
-</section>
-<section class="section">
-<div class="container">
-<p class="eyebrow">What It Monitors Today</p>
-<h2>Voltage and temperature, measured where the battery lives</h2>
-<span class="status status-working">Working now</span>
-<p style="max-width:70ch;margin-top:16px">The current Power Node prototype measures battery voltage and temperature, the two most direct indicators of whether a battery is healthy or heading for trouble. Sentinel does not try to do everything at once. It starts with the readings that matter most for catching a battery problem before it becomes a dead battery, a stranded vehicle, or a damaged piece of equipment.</p>
-</div>
-</section>
-<section class="section section-alt">
-<div class="container">
-<p class="eyebrow">Node, Hub, Dashboard, Cloud</p>
-<h2>How the pieces fit together</h2>
-<div class="diagram">
-<div class="diagram-node"><strong>Power Node</strong><span>Voltage &amp; temperature sensor</span></div>
-<div class="diagram-arrow">&#8594;<small>LoRa</small></div>
-<div class="diagram-node"><strong>Sentinel Hub</strong><span>Local gateway</span></div>
-<div class="diagram-arrow">&#8594;<small>Wi&#8209;Fi / HTTPS</small></div>
-<div class="diagram-col">
-<div class="diagram-branch">
-<div class="diagram-node"><strong>Local Dashboard</strong><span>Always available on your network</span></div>
-<div class="diagram-node"><strong>ReCore Cloud</strong><span>Firestore telemetry storage</span></div>
-</div>
-</div>
-</div>
-<div class="grid grid-2">
-<div class="card">
-<h3>Power Node</h3>
-<p>A small battery-powered sensor that attaches to the battery or equipment being watched. It reads voltage and temperature and transmits over LoRa, a long-range, low-power wireless protocol, so it does not need Wi-Fi or a nearby outlet.</p>
-</div>
-<div class="card">
-<h3>Sentinel Hub</h3>
-<p>Receives readings from one or more Power Nodes over LoRa. It runs a local dashboard on your own network and, when it has an internet connection, forwards the same readings to the ReCore cloud over HTTPS.</p>
-</div>
-<div class="card">
-<h3>Local Dashboard</h3>
-<p>A dashboard served directly from the Hub, viewable from a browser on your local network. It works whether or not the Hub has internet access.</p>
-</div>
-<div class="card">
-<h3>ReCore Cloud</h3>
-<p>The Hub uploads telemetry through an HTTPS Cloud Function into Firestore. This path is working today; historical charts and alerting built on top of that data are planned.</p>
-</div>
-</div>
-</div>
-</section>
-<section class="section">
-<div class="container">
-<p class="eyebrow">Local-First, By Design</p>
-<h2>The dashboard does not disappear when the internet does</h2>
-<p style="max-width:70ch">The Sentinel Hub is built so that losing Wi-Fi or internet access does not mean losing visibility into your equipment. Sensor readings keep flowing over LoRa, and the local dashboard keeps working on your own network. Cloud upload adds remote visibility and, eventually, history and alerting; it is not a requirement for the core system to function.</p>
-</div>
-</section>
-<section class="section section-alt">
-<div class="container">
-<p class="eyebrow">Example Use Cases</p>
-<h2>Built for equipment that sits still, sometimes for too long</h2>
-<div class="use-cases">
-<div class="use-case">Stored vehicles</div>
-<div class="use-case">Tractors &amp; ag equipment</div>
-<div class="use-case">Equipment yards</div>
-<div class="use-case">RVs</div>
-<div class="use-case">Boats</div>
-<div class="use-case">Fleet support vehicles</div>
-<div class="use-case">Backup &amp; standby batteries</div>
-</div>
-</div>
-</section>
-<section class="section">
-<div class="container">
-<p class="eyebrow">Current Status</p>
-<h2>Where the prototype stands today</h2>
-<span class="status status-testing">Field-testing</span>
-<p style="max-width:70ch;margin-top:16px">Sentinel is currently a working prototype being tested on real equipment in real conditions. The full path from Power Node to LoRa to Hub to local dashboard to Firestore is functional, and we are using field testing to find out what breaks, what needs to be more rugged, and what the next round of hardware should look like. See the <a href="development.html">Development page</a> for specifics on where things stand.</p>
-</div>
-</section>
-<section class="section section-alt">
-<div class="container">
-<p class="eyebrow">Planned Capabilities</p>
-<h2>What is planned next (not yet available)</h2>
-<div class="grid grid-3">
-<div class="card"><span class="status status-planned">Planned</span><h3>Historical charts &amp; trends</h3><p>Graphing past voltage and temperature readings over time in the cloud dashboard.</p></div>
-<div class="card"><span class="status status-planned">Planned</span><h3>Alerts &amp; notifications</h3><p>Configurable warnings when a reading falls outside a safe range.</p></div>
-<div class="card"><span class="status status-planned">Planned</span><h3>Account login &amp; device management</h3><p>Secure multi-user access and a proper interface for adding or configuring nodes and hubs.</p></div>
-<div class="card"><span class="status status-planned">Planned</span><h3>Cellular connectivity</h3><p>Primarily being considered for the Sentinel Hub, with direct-cellular nodes possible for isolated or mobile assets without Wi-Fi.</p></div>
-<div class="card"><span class="status status-planned">Planned</span><h3>Production hardware</h3><p>Ruggedized enclosures and manufactured boards beyond the current prototype build.</p></div>
-</div>
-</div>
-</section>
-<section class="section" style="text-align:center">
-<div class="container">
-<h2>Have equipment that could use a Sentinel node?</h2>
-<p style="max-width:60ch;margin:0 auto 8px">We are looking for real-world conditions to field-test against. If your stored vehicle, tractor, RV, boat, or backup battery sounds like a good fit, let's talk.</p>
-<div class="btn-row" style="justify-content:center">
-<a class="btn btn-primary" href="about.html#contact">Discuss Pilot Testing</a>
-</div>
-</div>
-</section>
-</main>
-<footer class="site-footer">
-<div class="container">
-<div class="footer-grid">
-<div class="footer-brand">
-<a class="brand" href="index.html">
-<svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="5" fill="currentColor"/><line x1="20" y1="3" x2="20" y2="9" stroke="currentColor" stroke-width="2.5"/><line x1="34" y1="11.5" x2="28.5" y2="14.7" stroke="currentColor" stroke-width="2.5"/><line x1="6" y1="28.5" x2="11.5" y2="25.3" stroke="currentColor" stroke-width="2.5"/></svg>
-ReCore Technology
-</a>
-<p>Modular monitoring and control systems for vehicles, equipment, farms, and remote assets. Sentinel is our first product line, currently in prototype and field-testing.</p>
-</div>
-<div class="footer-cols">
-<div class="footer-col">
-<h4>Site</h4>
-<ul>
-<li><a href="index.html">Home</a></li>
-<li><a href="sentinel.html">Sentinel</a></li>
-<li><a href="platform.html">Platform</a></li>
-<li><a href="development.html">Development</a></li>
-<li><a href="about.html">About &amp; Contact</a></li>
-</ul>
-</div>
-<div class="footer-col">
-<h4>Project</h4>
-<ul>
-<li><a href="https://github.com/Btbrinkley/Recore-Website" target="_blank" rel="noopener">GitHub Repository</a></li>
-<li><a href="development.html#milestones">Development Journal</a></li>
-</ul>
-</div>
-</div>
-</div>
-<div class="footer-bottom">
-<span>&copy; <span data-year>2026</span> ReCore Technology. All rights reserved.</span>
-<span>Prototype &amp; field-testing stage.</span>
-</div>
-</div>
-</footer>
-<script src="js/main.js"></script>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav-wrap" aria-label="Primary">
+      <a class="brand" href="index.html">
+        <img src="assets/logo.png" alt="ReCore Technology" class="brand-logo">
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">&#9776;</button>
+      <ul class="nav-links" id="primary-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="sentinel.html" aria-current="page">Sentinel</a></li>
+        <li><a href="platform.html">Platform</a></li>
+        <li><a href="development.html">Development</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <a class="nav-cta" href="about.html#contact">Request a Demo</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow">Sentinel</p>
+        <h1>Battery and equipment monitoring you do not have to think about</h1>
+        <p class="lead">Sentinel is ReCore's first product line. It watches battery voltage and temperature so equipment does not get discovered dead, and it is currently in prototype and field-testing.</p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">What It Monitors Today</p>
+        <h2>Voltage and temperature, measured where the battery lives</h2>
+        <span class="status status-working">Working now</span>
+        <p style="max-width:70ch;margin-top:16px">The current Power Node prototype measures battery voltage and temperature, the two most direct indicators of whether a battery is healthy or heading for trouble. It samples continuously and reports every 15 minutes in the field, or as often as you configure it.</p>
+      </div>
+    </section>
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">Node, Hub, Dashboard, Cloud</p>
+        <h2>How the pieces fit together</h2>
+        <div class="diagram">
+          <div class="diagram-node"><strong>Power Node</strong><span>Voltage &amp; temperature sensor</span></div>
+          <div class="diagram-arrow">&#8594;<small>LoRa</small></div>
+          <div class="diagram-node"><strong>Sentinel Hub</strong><span>Local gateway</span></div>
+          <div class="diagram-arrow">&#8594;<small>Wi&#8209;Fi / HTTPS</small></div>
+          <div class="diagram-col">
+            <div class="diagram-branch">
+              <div class="diagram-node"><strong>Local Dashboard</strong><span>Always available on your network</span></div>
+              <div class="diagram-node"><strong>ReCore Cloud</strong><span>Firestore telemetry storage</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Power Node</h3>
+            <p>A small battery-powered sensor that attaches to the battery or equipment being watched. It reads voltage and temperature and transmits over LoRa, a long-range, low-power wireless protocol, so it works across pastures, equipment yards, and shops without Wi-Fi.</p>
+          </div>
+          <div class="card">
+            <h3>Sentinel Hub</h3>
+            <p>Receives readings from one or more Power Nodes over LoRa. It runs a local dashboard on your own network and, when it has an internet connection, forwards the same readings to the ReCore cloud on your schedule.</p>
+          </div>
+          <div class="card">
+            <h3>Local Dashboard</h3>
+            <p>A dashboard served directly from the Hub, viewable from a browser on your local network. It works whether or not the Hub has internet access.</p>
+          </div>
+          <div class="card">
+            <h3>ReCore Cloud</h3>
+            <p>The Hub uploads telemetry through an HTTPS Cloud Function into Firestore. This path is working today; historical charts and alerting built on top of that data are planned.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">Local-First, By Design</p>
+        <h2>The dashboard does not disappear when the internet does</h2>
+        <p style="max-width:70ch">The Sentinel Hub is built so that losing Wi-Fi or internet access does not mean losing visibility into your equipment. Sensor readings keep flowing over LoRa, and the local dashboard stays live on your network. When internet returns, the Hub catches the cloud up with buffered readings.</p>
+      </div>
+    </section>
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">Remote Control Center</p>
+        <h2>Monitor your Sentinel network from anywhere</h2>
+        <p style="max-width:70ch">A cloud dashboard is now in development that displays live telemetry from your field-test sites, historical charts, and remote control capabilities. Try the prototype demo below.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="control-center.html">View Control Center Demo</a>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">Example Use Cases</p>
+        <h2>Built for equipment that sits still, sometimes for too long</h2>
+        <div class="use-cases">
+          <div class="use-case">Stored vehicles</div>
+          <div class="use-case">Tractors &amp; ag equipment</div>
+          <div class="use-case">Equipment yards</div>
+          <div class="use-case">RVs</div>
+          <div class="use-case">Boats</div>
+          <div class="use-case">Fleet support vehicles</div>
+          <div class="use-case">Backup &amp; standby batteries</div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">Current Status</p>
+        <h2>Where the prototype stands today</h2>
+        <span class="status status-testing">Field-testing</span>
+        <p style="max-width:70ch;margin-top:16px">Sentinel is currently a working prototype being tested on real equipment in real conditions. The full path from Power Node to LoRa to Hub to local dashboard to Firestore has been proven. Cloud-side features like historical charts, alerts, and account login are in active development.</p>
+      </div>
+    </section>
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">Planned Capabilities</p>
+        <h2>What is planned next (not yet available)</h2>
+        <div class="grid grid-3">
+          <div class="card"><span class="status status-planned">Planned</span><h3>Historical charts &amp; trends</h3><p>Graphing past voltage and temperature readings over time in the cloud dashboard.</p></div>
+          <div class="card"><span class="status status-planned">Planned</span><h3>Alerts &amp; notifications</h3><p>Configurable warnings when a reading falls outside a safe range.</p></div>
+          <div class="card"><span class="status status-planned">Planned</span><h3>Account login &amp; device management</h3><p>Secure multi-user access and a proper interface for adding or configuring nodes.</p></div>
+          <div class="card"><span class="status status-planned">Planned</span><h3>Cellular connectivity</h3><p>Primarily being considered for the Sentinel Hub, with direct-cellular nodes possible for isolated locations.</p></div>
+          <div class="card"><span class="status status-planned">Planned</span><h3>Production hardware</h3><p>Ruggedized enclosures and manufactured boards beyond the current prototype build.</p></div>
+        </div>
+      </div>
+    </section>
+    <section class="section" style="text-align:center">
+      <div class="container">
+        <h2>Have equipment that could use a Sentinel node?</h2>
+        <p style="max-width:60ch;margin:0 auto 8px">We are looking for real-world conditions to field-test against. If your stored vehicle, tractor, RV, boat, or backup battery sounds like a good fit, let us know.</p>
+        <div class="btn-row" style="justify-content:center">
+          <a class="btn btn-primary" href="about.html#contact">Discuss Pilot Testing</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="3" fill="currentColor"/></svg>
+            ReCore Technology
+          </a>
+          <p>Modular monitoring and control systems for vehicles, equipment, farms, and remote assets. Sentinel is our first product line, currently in prototype and field-testing.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Site</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="sentinel.html">Sentinel</a></li>
+              <li><a href="platform.html">Platform</a></li>
+              <li><a href="development.html">Development</a></li>
+              <li><a href="about.html">About &amp; Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Project</h4>
+            <ul>
+              <li><a href="https://github.com/Btbrinkley/Recore-Website" target="_blank" rel="noopener">GitHub Repository</a></li>
+              <li><a href="development.html#milestones">Development Journal</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; <span data-year>2026</span> ReCore Technology. All rights reserved.</span>
+        <span>Prototype &amp; field-testing stage.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
 </body>
 </html>
