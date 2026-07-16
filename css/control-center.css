@@ -264,9 +264,25 @@
   border-color: var(--accent);
 }
 
+.cc-range-btn.is-loading {
+  opacity: 0.85;
+}
+
+.cc-range-btn.is-loading::after {
+  content: ' •';
+  animation: cc-pulse 1.1s ease-in-out infinite;
+}
+
 .cc-range-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.cc-chart-note {
+  margin-top: 8px;
+  color: var(--testing);
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .cc-summary-grid {
@@ -501,5 +517,21 @@
   .cc-range-btn,
   .cc-control-btn {
     transition: none;
+  }
+
+  .cc-range-btn.is-loading::after {
+    animation: none;
+  }
+}
+
+@keyframes cc-pulse {
+  0% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
   }
 }
