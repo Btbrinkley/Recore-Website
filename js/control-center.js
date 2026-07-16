@@ -16,7 +16,6 @@
   const DEMO_IDS = {
     siteId: 'spitfire',
     hubId: 'hub001',
-    nodeId: 'node001',
   };
 
   const RANGE_LABELS = {
@@ -80,7 +79,7 @@
     latestData: null,
     historyData: null,
     selectedRange: '24h',
-    selectedNodeId: DEMO_IDS.nodeId,
+    selectedNodeId: null,
     availableNodes: [],
     chart: null,
     lastRefreshTime: null,
@@ -370,8 +369,11 @@
     el.nodeSelect.innerHTML = '';
 
     if (!nodes || !nodes.length) {
+      appState.selectedNodeId = null;
       const opt = document.createElement('option');
       opt.value = '';
+      opt.disabled = true;
+      opt.selected = true;
       opt.textContent = 'No nodes found';
       el.nodeSelect.appendChild(opt);
       return;
@@ -380,14 +382,19 @@
     nodes.forEach((node) => {
       const opt = document.createElement('option');
       opt.value = node.nodeId;
-      opt.textContent = node.displayName || node.nodeId;
-      if (node.nodeId === appState.selectedNodeId) opt.selected = true;
+      // "DisplayName — nodeId" when a distinct display name is present, else just nodeId
+      const hasName = node.displayName && node.displayName !== node.nodeId;
+      opt.textContent = hasName ? `${node.displayName} \u2014 ${node.nodeId}` : node.nodeId;
       el.nodeSelect.appendChild(opt);
     });
 
-    // If the previously selected node is no longer in the list, default to first
-    const inList = nodes.some((n) => n.nodeId === appState.selectedNodeId);
-    if (!inList) {
+    // Keep the currently selected node if it is still in the list.
+    // Otherwise fall through to first node (API is the source of truth for ordering).
+    const stillPresent = appState.selectedNodeId &&
+      nodes.some((n) => n.nodeId === appState.selectedNodeId);
+    if (stillPresent) {
+      el.nodeSelect.value = appState.selectedNodeId;
+    } else {
       appState.selectedNodeId = nodes[0].nodeId;
       el.nodeSelect.value = appState.selectedNodeId;
     }
@@ -799,6 +806,11 @@
     const requestedRange = range || appState.selectedRange;
     appState.selectedRange = requestedRange;
 
+    if (!appState.selectedNodeId) {
+      showMessage('error', 'No Node Selected', 'No monitoring node is available. Check the hub connection and reload the page.');
+      return;
+    }
+
     const requestId = ++appState.requestCounter;
     appState.activeRequestId = requestId;
 
@@ -922,12 +934,26 @@
       showMessage('loading', 'Connecting', 'Discovering nodes…');
       try {
         const nodesData = await fetchNodes();
-        appState.availableNodes = nodesData.nodes || [];
+        const freshNodes = (nodesData && Array.isArray(nodesData.nodes)) ? nodesData.nodes : [];
+        if (freshNodes.length) {
+          // Update the known list only when the API returns something useful,
+          // so a transient failure never wipes out the last good list.
+          appState.availableNodes = freshNodes;
+        }
       } catch (error) {
-        // Fall back to the hardcoded node so the page still works
-        appState.availableNodes = [{ nodeId: DEMO_IDS.nodeId, displayName: DEMO_IDS.nodeId, assetName: null }];
-        console.warn('[Sentinel] Node discovery failed, using fallback node:', error.message);
+        console.error('[Sentinel] Node discovery failed:', error.message);
+        // Keep whatever was in availableNodes (empty on first load).
       }
+
+      if (!appState.availableNodes.length) {
+        showMessage(
+          'error',
+          'No Nodes Discovered',
+          'No monitoring nodes were found for this hub. Check that the hub is reporting and reload the page.'
+        );
+        return;
+      }
+
       renderNodeSelector(appState.availableNodes);
 
       // Switch node when user changes the selector
