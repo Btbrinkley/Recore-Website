@@ -80,6 +80,8 @@
     latestData: null,
     historyData: null,
     selectedRange: '24h',
+    selectedNodeId: DEMO_IDS.nodeId,
+    availableNodes: [],
     chart: null,
     lastRefreshTime: null,
     refreshInterval: null,
@@ -95,7 +97,6 @@
     lastRefresh: document.getElementById('lastRefresh'),
     siteDisplay: document.getElementById('siteDisplay'),
     hubDisplay: document.getElementById('hubDisplay'),
-    nodeDisplay: document.getElementById('nodeDisplay'),
     stateMessages: document.getElementById('stateMessages'),
     voltageValue: document.getElementById('voltageValue'),
     tempValue: document.getElementById('tempValue'),
@@ -118,6 +119,7 @@
     historyChart: document.getElementById('historyChart'),
     rangeButtons: document.querySelectorAll('.cc-range-btn'),
     chartOutlierNotice: document.getElementById('chartOutlierNotice'),
+    nodeSelect: document.getElementById('nodeSelect'),
   };
 
   // ===== Utilities =====
@@ -361,7 +363,34 @@
   function renderDeviceInfo() {
     el.siteDisplay.textContent = DEMO_IDS.siteId;
     el.hubDisplay.textContent = DEMO_IDS.hubId;
-    el.nodeDisplay.textContent = DEMO_IDS.nodeId;
+  }
+
+  function renderNodeSelector(nodes) {
+    if (!el.nodeSelect) return;
+    el.nodeSelect.innerHTML = '';
+
+    if (!nodes || !nodes.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No nodes found';
+      el.nodeSelect.appendChild(opt);
+      return;
+    }
+
+    nodes.forEach((node) => {
+      const opt = document.createElement('option');
+      opt.value = node.nodeId;
+      opt.textContent = node.displayName || node.nodeId;
+      if (node.nodeId === appState.selectedNodeId) opt.selected = true;
+      el.nodeSelect.appendChild(opt);
+    });
+
+    // If the previously selected node is no longer in the list, default to first
+    const inList = nodes.some((n) => n.nodeId === appState.selectedNodeId);
+    if (!inList) {
+      appState.selectedNodeId = nodes[0].nodeId;
+      el.nodeSelect.value = appState.selectedNodeId;
+    }
   }
 
   function renderDataModeAndConnection() {
@@ -739,9 +768,18 @@
   }
 
   // ===== Data Fetching =====
+  async function fetchNodes() {
+    try {
+      return await SentinelAPI.getNodes(DEMO_IDS.siteId, DEMO_IDS.hubId);
+    } catch (error) {
+      console.error('Failed to fetch nodes:', error);
+      throw error;
+    }
+  }
+
   async function fetchLatestData() {
     try {
-      return await SentinelAPI.getLatest(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId);
+      return await SentinelAPI.getLatest(DEMO_IDS.siteId, DEMO_IDS.hubId, appState.selectedNodeId);
     } catch (error) {
       console.error('Failed to fetch latest data:', error);
       throw error;
@@ -750,7 +788,7 @@
 
   async function fetchHistoryData(range) {
     try {
-      return await SentinelAPI.getHistory(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId, range);
+      return await SentinelAPI.getHistory(DEMO_IDS.siteId, DEMO_IDS.hubId, appState.selectedNodeId, range);
     } catch (error) {
       console.error(`Failed to fetch history for range ${range}:`, error);
       throw error;
@@ -864,7 +902,7 @@
   }
 
   // ===== Initialization =====
-  function init() {
+  async function init() {
     try {
       // Validate configuration
       if (!window.SENTINEL_CONFIG) {
@@ -879,6 +917,26 @@
       renderDeviceInfo();
       renderDataModeAndConnection();
       setupRangeButtons();
+
+      // Discover nodes before loading telemetry
+      showMessage('loading', 'Connecting', 'Discovering nodes…');
+      try {
+        const nodesData = await fetchNodes();
+        appState.availableNodes = nodesData.nodes || [];
+      } catch (error) {
+        // Fall back to the hardcoded node so the page still works
+        appState.availableNodes = [{ nodeId: DEMO_IDS.nodeId, displayName: DEMO_IDS.nodeId, assetName: null }];
+        console.warn('[Sentinel] Node discovery failed, using fallback node:', error.message);
+      }
+      renderNodeSelector(appState.availableNodes);
+
+      // Switch node when user changes the selector
+      if (el.nodeSelect) {
+        el.nodeSelect.addEventListener('change', function() {
+          appState.selectedNodeId = this.value;
+          loadAllData(appState.selectedRange);
+        });
+      }
 
       // Initial data load
       loadAllData(appState.selectedRange);

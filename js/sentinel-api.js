@@ -150,6 +150,20 @@ const SentinelAPI = (() => {
     return data;
   }
 
+  /**
+   * Validate nodes response structure
+   * @private
+   */
+  function validateNodesResponse(data) {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Nodes response is not an object');
+    }
+    if (!Array.isArray(data.nodes)) {
+      throw new Error('Response missing "nodes" array');
+    }
+    return data;
+  }
+
   return {
     /**
      * Fetch latest reading for a node
@@ -207,6 +221,27 @@ const SentinelAPI = (() => {
         return validateHistoryResponse(data);
       } catch (error) {
         throw new Error(`Failed to fetch history for range "${range}": ${error.message}`);
+      }
+    },
+
+    /**
+     * Fetch all nodes under a hub
+     * @param {string} siteId
+     * @param {string} hubId
+     * @returns {Promise} Resolves with { siteId, hubId, nodes: [...] }
+     */
+    async getNodes(siteId, hubId) {
+      const config = getConfig();
+
+      if (config.useMockData) {
+        return SentinelMockData.getNodes(siteId, hubId);
+      }
+
+      try {
+        const data = await fetchLive('/dashboard/nodes', { siteId, hubId });
+        return validateNodesResponse(data);
+      } catch (error) {
+        throw new Error(`Failed to fetch nodes: ${error.message}`);
       }
     },
 
