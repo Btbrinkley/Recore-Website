@@ -49,6 +49,32 @@ const SentinelMockData = (() => {
       });
     },
 
+    getNodes(siteId, hubId) {
+      const now = new Date();
+      return Promise.resolve({
+        siteId,
+        hubId,
+        nodes: [
+          {
+            nodeId: 'node001',
+            displayName: 'node001',
+            assetName: null,
+            lastSeenAt: new Date(now.getTime() - 45000).toISOString(),
+            latest: {
+              voltage: 12.68,
+              temperatureF: 101.3,
+              rssi: -87,
+              statusCode: 0,
+              status: 'OK',
+              sequence: 1024,
+              firmwareVersion: '0.4.1-field',
+              recordedAt: new Date(now.getTime() - 45000).toISOString(),
+            },
+          },
+        ],
+      });
+    },
+
     getHistory(siteId, hubId, nodeId, range) {
       let hours = 24;
       if (range === 'live') hours = 1;
