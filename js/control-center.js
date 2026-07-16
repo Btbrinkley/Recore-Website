@@ -1,6 +1,6 @@
 /**
  * Sentinel Control Center - Main Application Logic
- * 
+ *
  * Manages:
  * - Data fetching and refresh cycles
  * - Chart rendering
@@ -19,6 +19,13 @@
     nodeId: 'node001',
   };
 
+  const RANGE_LABELS = {
+    live: 'Live',
+    '24h': '24 Hours',
+    '7d': '7 Days',
+    '30d': '30 Days',
+  };
+
   const STATE = {
     LOADING: 'loading',
     ERROR: 'error',
@@ -27,6 +34,45 @@
     API_UNAVAILABLE: 'api-unavailable',
     CONFIG_ERROR: 'config-error',
   };
+
+  const VOLTAGE_FORMATTER = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 3,
+  });
+
+  const TEMPERATURE_FORMATTER = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+
+  const INTEGER_FORMATTER = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 0,
+  });
+
+  const AXIS_2DP_FORMATTER = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
+  const AXIS_1DP_FORMATTER = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
+
+  const TOOLTIP_SHORT_DATE_TIME = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  const TOOLTIP_LONG_DATE_TIME = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
   // ===== Application State =====
   let appState = {
@@ -38,6 +84,8 @@
     lastRefreshTime: null,
     refreshInterval: null,
     useMockData: false,
+    requestCounter: 0,
+    activeRequestId: 0,
   };
 
   // ===== DOM Elements =====
@@ -69,51 +117,112 @@
     summaryRange: document.getElementById('summaryRange'),
     historyChart: document.getElementById('historyChart'),
     rangeButtons: document.querySelectorAll('.cc-range-btn'),
+    chartOutlierNotice: document.getElementById('chartOutlierNotice'),
   };
 
   // ===== Utilities =====
-  function formatTime(isoString) {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleString();
-    } catch {
-      return '—';
-    }
+  function toDate(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  }
+
+  function getRangeLabel(range) {
+    return RANGE_LABELS[range] || range || '—';
+  }
+
+  function formatVoltage(value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+    return VOLTAGE_FORMATTER.format(Number(value));
+  }
+
+  function formatTemperature(value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+    return TEMPERATURE_FORMATTER.format(Number(value));
+  }
+
+  function formatInteger(value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+    return INTEGER_FORMATTER.format(Number(value));
   }
 
   function formatTimeAgo(isoString) {
-    try {
-      const date = new Date(isoString);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMin = Math.floor(diffMs / 60000);
-      const diffSec = Math.floor(diffMs / 1000);
+    const date = toDate(isoString);
+    if (!date) return '—';
 
-      if (diffMin === 0) return `${diffSec}s ago`;
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffHrs = Math.floor(diffMin / 60);
-      if (diffHrs < 24) return `${diffHrs}h ago`;
-      const diffDays = Math.floor(diffHrs / 24);
-      return `${diffDays}d ago`;
-    } catch {
-      return '—';
-    }
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffSec = Math.floor(diffMs / 1000);
+
+    if (diffMin === 0) return `${diffSec}s ago`;
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHrs = Math.floor(diffMin / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    return `${diffDays}d ago`;
   }
 
-  function formatNumber(num, decimals = 2) {
-    if (num === null || num === undefined) return '—';
-    return Number(num).toFixed(decimals);
+  function setRangeButtonState(activeRange, loading) {
+    el.rangeButtons.forEach((button) => {
+      const range = button.getAttribute('data-range');
+      const isActive = range === activeRange;
+      button.classList.toggle('active', isActive);
+      button.classList.toggle('is-loading', isActive && loading);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      button.setAttribute('aria-busy', isActive && loading ? 'true' : 'false');
+    });
+  }
+
+  function showChartNotice(message) {
+    if (!el.chartOutlierNotice) return;
+    if (!message) {
+      el.chartOutlierNotice.textContent = '';
+      el.chartOutlierNotice.hidden = true;
+      return;
+    }
+    el.chartOutlierNotice.textContent = message;
+    el.chartOutlierNotice.hidden = false;
+  }
+
+  function getTooltipTimestamp(contextPoint) {
+    if (!contextPoint) return null;
+    if (Number.isFinite(contextPoint.parsed && contextPoint.parsed.x)) {
+      return contextPoint.parsed.x;
+    }
+    const raw = contextPoint.raw;
+    if (raw && typeof raw === 'object') {
+      if (raw.x !== null && raw.x !== undefined) return raw.x;
+      if (raw.recordedAt) return raw.recordedAt;
+    }
+    return null;
+  }
+
+  function formatTooltipTitle(tooltipItems, range) {
+    if (!tooltipItems || tooltipItems.length === 0) return '';
+    const timestamp = getTooltipTimestamp(tooltipItems[0]);
+    const date = toDate(timestamp);
+    if (!date) {
+      if (tooltipItems[0].raw && tooltipItems[0].raw.recordedAt) {
+        return tooltipItems[0].raw.recordedAt;
+      }
+      return 'Timestamp unavailable';
+    }
+    const formatter = range === '7d' || range === '30d'
+      ? TOOLTIP_LONG_DATE_TIME
+      : TOOLTIP_SHORT_DATE_TIME;
+    return formatter.format(date);
   }
 
   function showMessage(type, title, message) {
     const icon = {
-      'error': '⚠️',
-      'warning': '⚠️',
-      'loading': '⏳',
-      'info': 'ℹ️',
+      error: '⚠️',
+      warning: '⚠️',
+      loading: '⏳',
+      info: 'ℹ️',
     }[type] || 'ℹ️';
 
-    const messageHtml = `
+    el.stateMessages.innerHTML = `
       <div class="cc-state-message cc-state-${type}">
         <div class="cc-state-icon">${icon}</div>
         <div class="cc-state-text">
@@ -121,12 +230,122 @@
         </div>
       </div>
     `;
-
-    el.stateMessages.innerHTML = messageHtml;
   }
 
   function clearMessages() {
     el.stateMessages.innerHTML = '';
+  }
+
+  function percentile(sortedValues, p) {
+    if (!sortedValues.length) return null;
+    const index = (sortedValues.length - 1) * p;
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    if (lower === upper) return sortedValues[lower];
+    return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * (index - lower);
+  }
+
+  function calculateAxisBounds(values, options) {
+    const settings = Object.assign({
+      robust: false,
+      paddingRatio: 0.1,
+      minPadding: 0.1,
+      minSpan: 0.25,
+    }, options || {});
+
+    const clean = values.filter((value) => Number.isFinite(value));
+    if (!clean.length) {
+      return {
+        hasData: false,
+        min: undefined,
+        max: undefined,
+        outlierCount: 0,
+      };
+    }
+
+    const sorted = clean.slice().sort((a, b) => a - b);
+    const actualMin = sorted[0];
+    const actualMax = sorted[sorted.length - 1];
+    let focusMin = actualMin;
+    let focusMax = actualMax;
+    let outlierCount = 0;
+
+    if (settings.robust && sorted.length >= 6) {
+      const q1 = percentile(sorted, 0.25);
+      const q3 = percentile(sorted, 0.75);
+      const iqr = q3 - q1;
+      if (Number.isFinite(iqr) && iqr > 0) {
+        const lowFence = q1 - (1.5 * iqr);
+        const highFence = q3 + (1.5 * iqr);
+        const inliers = sorted.filter((value) => value >= lowFence && value <= highFence);
+        outlierCount = sorted.length - inliers.length;
+        if (inliers.length >= 3) {
+          focusMin = inliers[0];
+          focusMax = inliers[inliers.length - 1];
+        }
+      }
+    }
+
+    let span = focusMax - focusMin;
+    if (!Number.isFinite(span) || span < settings.minSpan) {
+      span = settings.minSpan;
+      const center = (focusMin + focusMax) / 2;
+      focusMin = center - (span / 2);
+      focusMax = center + (span / 2);
+    }
+
+    const pad = Math.max(settings.minPadding, span * settings.paddingRatio);
+    return {
+      hasData: true,
+      min: focusMin - pad,
+      max: focusMax + pad,
+      outlierCount,
+      actualMin,
+      actualMax,
+    };
+  }
+
+  function getTimeScaleConfig(range, readings) {
+    const safeRange = range || '24h';
+    const dates = readings
+      .map((reading) => toDate(reading.recordedAt))
+      .filter(Boolean)
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    const spanMs = dates.length > 1
+      ? dates[dates.length - 1].getTime() - dates[0].getTime()
+      : 0;
+
+    const configByRange = {
+      live: {
+        unit: spanMs <= 6 * 60 * 60 * 1000 ? 'minute' : 'hour',
+        maxTicksLimit: 8,
+      },
+      '24h': {
+        unit: 'hour',
+        maxTicksLimit: 8,
+      },
+      '7d': {
+        unit: 'day',
+        maxTicksLimit: 8,
+      },
+      '30d': {
+        unit: 'day',
+        maxTicksLimit: 10,
+      },
+    };
+
+    const chosen = configByRange[safeRange] || configByRange['24h'];
+
+    return {
+      unit: chosen.unit,
+      maxTicksLimit: chosen.maxTicksLimit,
+      displayFormats: {
+        minute: 'h:mm a',
+        hour: safeRange === '24h' || safeRange === 'live' ? 'h a' : 'MMM d, h a',
+        day: 'MMM d',
+      },
+    };
   }
 
   // ===== Battery Health Assessment =====
@@ -170,25 +389,30 @@
     if (!data || !data.latest) return;
 
     const latest = data.latest;
-    const isOnline = SentinelAPI.isNodeOnline(new Date(latest.recordedAt).getTime());
+    const latestTimestamp = toDate(latest.recordedAt);
+    const isOnline = latestTimestamp
+      ? SentinelAPI.isNodeOnline(latestTimestamp.getTime())
+      : false;
 
     // Voltage
-    el.voltageValue.textContent = formatNumber(latest.voltage, 2);
+    el.voltageValue.textContent = formatVoltage(latest.voltage);
     const voltageHealth = assessBatteryHealth(latest.voltage);
 
     // Temperature
-    el.tempValue.textContent = formatNumber(latest.temperatureF, 1);
+    el.tempValue.textContent = formatTemperature(latest.temperatureF);
 
     // Health
     el.healthValue.textContent = voltageHealth;
-    const healthColor = voltageHealth === 'Good' ? 'var(--good)' : 
-                        voltageHealth === 'Fair' ? 'var(--testing)' :
-                        '#d32f2f';
+    const healthColor = voltageHealth === 'Good'
+      ? 'var(--good)'
+      : voltageHealth === 'Fair'
+        ? 'var(--testing)'
+        : '#d32f2f';
     el.healthStatus.innerHTML = `<div class="cc-metric-status-dot" style="background-color: ${healthColor}"></div>`;
     el.healthStatus.appendChild(document.createTextNode(voltageHealth));
 
     // RSSI
-    el.rssiValue.textContent = latest.rssi || '—';
+    el.rssiValue.textContent = formatInteger(latest.rssi);
 
     // Last report time
     el.lastReportTime.textContent = formatTimeAgo(latest.recordedAt);
@@ -201,33 +425,35 @@
     el.nodeStatusText.textContent = statusText;
   }
 
-  function renderHistoryData(data) {
-    if (!data || !data.readings || data.readings.length === 0) {
+  function renderHistoryData(data, selectedRange) {
+    const readings = (data && Array.isArray(data.readings)) ? data.readings : [];
+    const rangeLabel = getRangeLabel((data && data.range) || selectedRange);
+
+    if (!readings.length) {
       el.summaryMinVoltage.textContent = '—';
       el.summaryMaxVoltage.textContent = '—';
       el.summaryMinTemp.textContent = '—';
       el.summaryMaxTemp.textContent = '—';
       el.summaryCount.textContent = '0';
+      el.summaryRange.textContent = rangeLabel;
       return;
     }
 
-    const readings = data.readings;
-    const voltages = readings.map(r => r.voltage).filter(v => v !== null && v !== undefined);
-    const temps = readings.map(r => r.temperatureF).filter(t => t !== null && t !== undefined);
+    const voltages = readings.map((reading) => reading.voltage).filter((value) => value !== null && value !== undefined);
+    const temps = readings.map((reading) => reading.temperatureF).filter((value) => value !== null && value !== undefined);
 
     const minVoltage = voltages.length > 0 ? Math.min(...voltages) : null;
     const maxVoltage = voltages.length > 0 ? Math.max(...voltages) : null;
     const minTemp = temps.length > 0 ? Math.min(...temps) : null;
     const maxTemp = temps.length > 0 ? Math.max(...temps) : null;
 
-    el.summaryMinVoltage.textContent = minVoltage !== null ? formatNumber(minVoltage, 2) : '—';
-    el.summaryMaxVoltage.textContent = maxVoltage !== null ? formatNumber(maxVoltage, 2) : '—';
-    el.summaryMinTemp.textContent = minTemp !== null ? formatNumber(minTemp, 1) : '—';
-    el.summaryMaxTemp.textContent = maxTemp !== null ? formatNumber(maxTemp, 1) : '—';
-    el.summaryCount.textContent = readings.length;
-    el.summaryRange.textContent = data.range || '—';
+    el.summaryMinVoltage.textContent = minVoltage !== null ? formatVoltage(minVoltage) : '—';
+    el.summaryMaxVoltage.textContent = maxVoltage !== null ? formatVoltage(maxVoltage) : '—';
+    el.summaryMinTemp.textContent = minTemp !== null ? formatTemperature(minTemp) : '—';
+    el.summaryMaxTemp.textContent = maxTemp !== null ? formatTemperature(maxTemp) : '—';
+    el.summaryCount.textContent = formatInteger(readings.length);
+    el.summaryRange.textContent = rangeLabel;
   }
-
 
   // ===== Chart Visual Plugins =====
   // Draws a thin vertical guide line through the active hover point,
@@ -237,8 +463,8 @@
     afterDatasetsDraw(chart) {
       const active = chart.getActiveElements();
       if (!active || !active.length) return;
-      const { ctx, chartArea } = chart;
       const x = active[0].element.x;
+      const { ctx, chartArea } = chart;
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(x, chartArea.top);
@@ -252,8 +478,10 @@
   };
 
   // ===== Chart Rendering =====
-  function renderChart(data) {
-    if (!data || !data.readings || data.readings.length === 0) {
+  function renderChart(data, selectedRange) {
+    const readings = (data && Array.isArray(data.readings)) ? data.readings : [];
+    if (!readings.length) {
+      showChartNotice('');
       if (appState.chart) {
         appState.chart.destroy();
         appState.chart = null;
@@ -261,14 +489,56 @@
       return;
     }
 
-    const readings = data.readings;
-    const labels = readings.map(r => new Date(r.recordedAt));
-    const voltages = readings.map(r => r.voltage);
-    const temperatures = readings.map(r => r.temperatureF);
+    const sortedReadings = readings
+      .slice()
+      .sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
+
+    const voltagePoints = sortedReadings.map((reading) => ({
+      x: new Date(reading.recordedAt).getTime(),
+      y: reading.voltage,
+      recordedAt: reading.recordedAt,
+    }));
+
+    const temperaturePoints = sortedReadings.map((reading) => ({
+      x: new Date(reading.recordedAt).getTime(),
+      y: reading.temperatureF === undefined ? null : reading.temperatureF,
+      recordedAt: reading.recordedAt,
+    }));
+
+    const voltageValues = readings
+      .map((reading) => reading.voltage)
+      .filter((value) => Number.isFinite(value));
+    const temperatureValues = readings
+      .map((reading) => reading.temperatureF)
+      .filter((value) => Number.isFinite(value));
+
+    const voltageBounds = calculateAxisBounds(voltageValues, {
+      robust: true,
+      paddingRatio: 0.12,
+      minPadding: 0.05,
+      minSpan: 0.2,
+    });
+    const temperatureBounds = calculateAxisBounds(temperatureValues, {
+      robust: false,
+      paddingRatio: 0.15,
+      minPadding: 1,
+      minSpan: 3,
+    });
+
+    if (voltageBounds.outlierCount > 0) {
+      showChartNotice(
+        `Voltage scale is focused on typical readings; ${voltageBounds.outlierCount} outlier reading` +
+        `${voltageBounds.outlierCount === 1 ? '' : 's'} remain visible outside the focused trend range.`
+      );
+    } else {
+      showChartNotice('');
+    }
+
+    const rangeForChart = selectedRange || (data && data.range) || appState.selectedRange;
+    const timeScale = getTimeScaleConfig(rangeForChart, sortedReadings);
+    const shouldDecimate = (rangeForChart === '7d' || rangeForChart === '30d') && sortedReadings.length > 800;
 
     const ctx = el.historyChart.getContext('2d');
-
-    // Destroy previous chart
     if (appState.chart) {
       appState.chart.destroy();
     }
@@ -276,11 +546,11 @@
     appState.chart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: labels,
         datasets: [
           {
             label: 'Voltage (V)',
-            data: voltages,
+            data: voltagePoints,
+            parsing: false,
             borderColor: '#f2a530',
             backgroundColor: 'rgba(242, 165, 48, 0.08)',
             borderWidth: 2,
@@ -297,7 +567,8 @@
           },
           {
             label: 'Temperature (°F)',
-            data: temperatures,
+            data: temperaturePoints,
+            parsing: false,
             borderColor: '#5b8dc9',
             backgroundColor: 'rgba(91, 141, 201, 0.08)',
             borderWidth: 2,
@@ -312,6 +583,7 @@
             tension: 0,
             yAxisID: 'y1',
             fill: false,
+            spanGaps: false,
           },
         ],
       },
@@ -319,6 +591,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        normalized: true,
         interaction: {
           mode: 'index',
           intersect: false,
@@ -328,6 +601,12 @@
           intersect: false,
         },
         plugins: {
+          decimation: {
+            enabled: shouldDecimate,
+            algorithm: 'lttb',
+            threshold: 900,
+            samples: rangeForChart === '30d' ? 550 : 700,
+          },
           legend: {
             display: true,
             position: 'top',
@@ -361,31 +640,32 @@
             titleFont: { size: 12, weight: '700' },
             bodyFont: { size: 12 },
             callbacks: {
-              title: function(context) {
-                if (context.length > 0) {
-                  return formatTime(context[0].label);
-                }
-                return '';
+              title(context) {
+                return formatTooltipTitle(context, rangeForChart);
               },
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (context.parsed.y !== null) {
-                  if (label.indexOf('Voltage') !== -1) {
-                    label += ': ' + context.parsed.y.toFixed(2) + ' V';
-                  } else if (label.indexOf('Temperature') !== -1) {
-                    label += ': ' + context.parsed.y.toFixed(1) + ' °F';
-                  } else {
-                    label += ': ' + context.parsed.y;
-                  }
+              label(context) {
+                const datasetLabel = context.dataset && context.dataset.label ? context.dataset.label : '';
+                const value = context.parsed.y;
+                if (value === null || value === undefined) return `${datasetLabel}: —`;
+                if (datasetLabel.includes('Voltage')) {
+                  return `${datasetLabel}: ${formatVoltage(value)} V`;
                 }
-                return label;
+                if (datasetLabel.includes('Temperature')) {
+                  return `${datasetLabel}: ${formatTemperature(value)} °F`;
+                }
+                return `${datasetLabel}: ${value}`;
               },
             },
           },
         },
         scales: {
           x: {
+            type: 'time',
             display: true,
+            time: {
+              unit: timeScale.unit,
+              displayFormats: timeScale.displayFormats,
+            },
             grid: {
               color: 'rgba(147, 163, 191, 0.08)',
               tickColor: 'rgba(147, 163, 191, 0.2)',
@@ -398,21 +678,15 @@
               font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
               maxRotation: 0,
               autoSkip: true,
-              maxTicksLimit: 8,
-            },
-            type: 'time',
-            time: {
-              unit: 'hour',
-              displayFormats: {
-                hour: 'HH:mm',
-                day: 'MMM DD',
-              },
+              maxTicksLimit: timeScale.maxTicksLimit,
             },
           },
           y: {
             type: 'linear',
             display: true,
             position: 'left',
+            min: voltageBounds.hasData ? voltageBounds.min : undefined,
+            max: voltageBounds.hasData ? voltageBounds.max : undefined,
             title: {
               display: true,
               text: 'Voltage (V)',
@@ -428,8 +702,8 @@
             ticks: {
               color: '#93a3bf',
               font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
-              callback: function(value) {
-                return Number(value).toFixed(2);
+              callback(value) {
+                return AXIS_2DP_FORMATTER.format(Number(value));
               },
             },
           },
@@ -437,6 +711,8 @@
             type: 'linear',
             display: true,
             position: 'right',
+            min: temperatureBounds.hasData ? temperatureBounds.min : undefined,
+            max: temperatureBounds.hasData ? temperatureBounds.max : undefined,
             title: {
               display: true,
               text: 'Temperature (°F)',
@@ -452,8 +728,8 @@
             ticks: {
               color: '#93a3bf',
               font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
-              callback: function(value) {
-                return Number(value).toFixed(1);
+              callback(value) {
+                return AXIS_1DP_FORMATTER.format(Number(value));
               },
             },
           },
@@ -465,9 +741,7 @@
   // ===== Data Fetching =====
   async function fetchLatestData() {
     try {
-      const data = await SentinelAPI.getLatest(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId);
-      appState.latestData = data;
-      return data;
+      return await SentinelAPI.getLatest(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId);
     } catch (error) {
       console.error('Failed to fetch latest data:', error);
       throw error;
@@ -476,9 +750,7 @@
 
   async function fetchHistoryData(range) {
     try {
-      const data = await SentinelAPI.getHistory(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId, range);
-      appState.historyData = data;
-      return data;
+      return await SentinelAPI.getHistory(DEMO_IDS.siteId, DEMO_IDS.hubId, DEMO_IDS.nodeId, range);
     } catch (error) {
       console.error(`Failed to fetch history for range ${range}:`, error);
       throw error;
@@ -486,40 +758,74 @@
   }
 
   async function loadAllData(range) {
+    const requestedRange = range || appState.selectedRange;
+    appState.selectedRange = requestedRange;
+
+    const requestId = ++appState.requestCounter;
+    appState.activeRequestId = requestId;
+
+    setRangeButtonState(requestedRange, true);
     clearMessages();
     appState.currentState = STATE.LOADING;
-    showMessage('loading', 'Refreshing Data', 'Fetching latest readings and history...');
+    showMessage('loading', 'Refreshing Data', `Fetching latest readings and ${getRangeLabel(requestedRange)} history...`);
 
     try {
       const [latest, history] = await Promise.all([
         fetchLatestData(),
-        fetchHistoryData(range),
+        fetchHistoryData(requestedRange),
       ]);
 
-      renderLatestData(latest);
-      renderHistoryData(history);
-      renderChart(history);
-      updateLastRefreshTime();
-      appState.currentState = STATE.SUCCESS;
-      clearMessages();
-    } catch (error) {
-      console.error('Error loading data:', error);
+      if (requestId !== appState.activeRequestId) {
+        console.info(`[Sentinel Control Center] Ignored stale response for range "${requestedRange}"`);
+        return;
+      }
 
-      if (appState.latestData || appState.historyData) {
-        // We have cached data, show warning instead of error
+      appState.latestData = latest;
+      appState.historyData = history;
+
+      renderLatestData(latest);
+      renderHistoryData(history, requestedRange);
+      renderChart(history, requestedRange);
+      updateLastRefreshTime();
+
+      const hasReadings = history && Array.isArray(history.readings) && history.readings.length > 0;
+      if (hasReadings) {
+        appState.currentState = STATE.SUCCESS;
+        clearMessages();
+      } else {
+        appState.currentState = STATE.NO_DATA;
+        showMessage(
+          'info',
+          'No Readings in Selected Range',
+          `The API returned no historical readings for ${getRangeLabel(requestedRange)}.`
+        );
+      }
+    } catch (error) {
+      if (requestId !== appState.activeRequestId) {
+        console.info(`[Sentinel Control Center] Ignored stale request error for range "${requestedRange}"`);
+        return;
+      }
+
+      console.error('Error loading data:', error);
+      const hasCachedData = appState.latestData || appState.historyData;
+
+      if (hasCachedData) {
         showMessage(
           'warning',
           'Data Refresh Failed',
-          `Using cached data. Error: ${error.message}`
+          `Using cached ${getRangeLabel(appState.selectedRange)} data. Error: ${error.message}`
         );
         appState.currentState = STATE.ERROR;
       } else {
-        // No cached data, show error
         const message = error.message.includes('not configured')
           ? 'API not configured. Set window.SENTINEL_CONFIG.apiUrl'
           : error.message;
         showMessage('error', 'Failed to Load Data', message);
         appState.currentState = STATE.ERROR;
+      }
+    } finally {
+      if (requestId === appState.activeRequestId) {
+        setRangeButtonState(requestedRange, false);
       }
     }
   }
@@ -548,14 +854,10 @@
 
   // ===== Range Selection =====
   function setupRangeButtons() {
-    el.rangeButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
+    setRangeButtonState(appState.selectedRange, false);
+    el.rangeButtons.forEach((button) => {
+      button.addEventListener('click', function() {
         const range = this.getAttribute('data-range');
-        appState.selectedRange = range;
-
-        el.rangeButtons.forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-
         loadAllData(range);
       });
     });
