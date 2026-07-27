@@ -24,7 +24,7 @@
   liveRefreshIntervalMs: 30000,
 
     // Which site/hub the dashboard reads (URL override -> injected -> default).
-    defaultSiteId: params.get('site') || injected.defaultSiteId || 'site001',
+    defaultSiteId: params.get('site') || injected.defaultSiteId || 'Cotton',
     defaultHubId: params.get('hub') || injected.defaultHubId || 'Home',
     defaultNodeId: params.get('node') || injected.defaultNodeId || 'node001',
   };
