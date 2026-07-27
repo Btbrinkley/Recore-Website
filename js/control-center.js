@@ -13,9 +13,11 @@
   'use strict';
 
   // ===== Constants =====
+  // Site/hub come from config.js (URL override -> injected -> live default),
+  // so the dashboard tracks whatever Site ID / Hub name the hub is set to.
   const DEMO_IDS = {
-    siteId: 'spitfire',
-    hubId: 'hub001',
+    siteId: (window.SENTINEL_CONFIG && window.SENTINEL_CONFIG.defaultSiteId) || 'site001',
+    hubId: (window.SENTINEL_CONFIG && window.SENTINEL_CONFIG.defaultHubId) || 'Home',
   };
 
   const RANGE_LABELS = {
@@ -384,7 +386,7 @@
       opt.value = node.nodeId;
       // "DisplayName — nodeId" when a distinct display name is present, else just nodeId
       const hasName = node.displayName && node.displayName !== node.nodeId;
-      opt.textContent = hasName ? `${node.displayName} \u2014 ${node.nodeId}` : node.nodeId;
+      opt.textContent = hasName ? node.displayName : node.nodeId;
       el.nodeSelect.appendChild(opt);
     });
 
