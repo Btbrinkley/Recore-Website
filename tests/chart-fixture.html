@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>Sentinel chart sample-data test</title><link rel="stylesheet" href="../css/control-center.css"><style>body{background:#101923;color:white;padding:20px;font-family:Arial}button{padding:12px;margin:10px}</style><h1>Sample data — chart verification</h1><button id="both">Both sensors</button><button id="external">External only</button><button id="empty">No data</button><div id="historyChart"></div><script src="../js/sentinel-chart.js"></script><script>
+const all=Array.from({length:12},(_,i)=>({readingId:String(i),recordedAt:new Date(Date.now()-(11-i)*60000).toISOString(),voltage:12.6-i*.01,internalTemperatureF:75+i*.1,externalTemperatureF:i===5?null:68+i*.2,rssi:-60-i,sequence:i+1}));
+function draw(points){SentinelChart.render(document.getElementById('historyChart'),points,'sample')}
+document.getElementById('both').onclick=()=>draw(all);document.getElementById('external').onclick=()=>draw(all.map(p=>({...p,internalTemperatureF:null})));document.getElementById('empty').onclick=()=>draw([]);draw(all);
+</script>

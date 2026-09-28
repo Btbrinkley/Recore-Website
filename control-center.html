@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/control-center.css">
   <!-- Chart.js for historical data visualization -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -98,9 +97,13 @@
           </div>
 
           <div class="cc-metric-card">
-            <div class="cc-metric-label">Battery Temperature</div>
+            <div class="cc-metric-label">External Probe Temperature</div>
             <div class="cc-metric-value"><span id="tempValue">—</span><span class="cc-metric-unit">°F</span></div>
             <div class="cc-metric-status" id="tempStatus"></div>
+          </div>
+          <div class="cc-metric-card" id="onboardTempMetric" hidden>
+            <div class="cc-metric-label">Onboard Temperature (SHT40)</div>
+            <div class="cc-metric-value"><span id="onboardTempValue">—</span><span class="cc-metric-unit">°F</span></div>
           </div>
 
           <div class="cc-metric-card">
@@ -137,7 +140,7 @@
             <button class="cc-range-btn" data-range="30d">30 Days</button>
           </div>
           <div class="cc-chart">
-            <canvas id="historyChart"></canvas>
+            <div id="historyChart"></div>
           </div>
           <div class="cc-chart-note" id="chartOutlierNotice" hidden></div>
         </div>
@@ -258,8 +261,7 @@
   <script src="js/config.js"></script>
   <script src="js/sentinel-mock.js"></script>
   <script src="js/sentinel-api.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+  <script src="js/sentinel-chart.js"></script>
   <script src="js/control-center.js"></script>
 </body>
 </html>

@@ -50,31 +50,6 @@
     maximumFractionDigits: 0,
   });
 
-  const AXIS_2DP_FORMATTER = new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-
-  const AXIS_1DP_FORMATTER = new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-  });
-
-  const TOOLTIP_SHORT_DATE_TIME = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  const TOOLTIP_LONG_DATE_TIME = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
   // ===== Application State =====
   let appState = {
     currentState: STATE.LOADING,
@@ -188,35 +163,6 @@
     el.chartOutlierNotice.hidden = false;
   }
 
-  function getTooltipTimestamp(contextPoint) {
-    if (!contextPoint) return null;
-    if (Number.isFinite(contextPoint.parsed && contextPoint.parsed.x)) {
-      return contextPoint.parsed.x;
-    }
-    const raw = contextPoint.raw;
-    if (raw && typeof raw === 'object') {
-      if (raw.x !== null && raw.x !== undefined) return raw.x;
-      if (raw.recordedAt) return raw.recordedAt;
-    }
-    return null;
-  }
-
-  function formatTooltipTitle(tooltipItems, range) {
-    if (!tooltipItems || tooltipItems.length === 0) return '';
-    const timestamp = getTooltipTimestamp(tooltipItems[0]);
-    const date = toDate(timestamp);
-    if (!date) {
-      if (tooltipItems[0].raw && tooltipItems[0].raw.recordedAt) {
-        return tooltipItems[0].raw.recordedAt;
-      }
-      return 'Timestamp unavailable';
-    }
-    const formatter = range === '7d' || range === '30d'
-      ? TOOLTIP_LONG_DATE_TIME
-      : TOOLTIP_SHORT_DATE_TIME;
-    return formatter.format(date);
-  }
-
   function showMessage(type, title, message) {
     const icon = {
       error: '⚠️',
@@ -237,118 +183,6 @@
 
   function clearMessages() {
     el.stateMessages.innerHTML = '';
-  }
-
-  function percentile(sortedValues, p) {
-    if (!sortedValues.length) return null;
-    const index = (sortedValues.length - 1) * p;
-    const lower = Math.floor(index);
-    const upper = Math.ceil(index);
-    if (lower === upper) return sortedValues[lower];
-    return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * (index - lower);
-  }
-
-  function calculateAxisBounds(values, options) {
-    const settings = Object.assign({
-      robust: false,
-      paddingRatio: 0.1,
-      minPadding: 0.1,
-      minSpan: 0.25,
-    }, options || {});
-
-    const clean = values.filter((value) => Number.isFinite(value));
-    if (!clean.length) {
-      return {
-        hasData: false,
-        min: undefined,
-        max: undefined,
-        outlierCount: 0,
-      };
-    }
-
-    const sorted = clean.slice().sort((a, b) => a - b);
-    const actualMin = sorted[0];
-    const actualMax = sorted[sorted.length - 1];
-    let focusMin = actualMin;
-    let focusMax = actualMax;
-    let outlierCount = 0;
-
-    if (settings.robust && sorted.length >= 6) {
-      const q1 = percentile(sorted, 0.25);
-      const q3 = percentile(sorted, 0.75);
-      const iqr = q3 - q1;
-      if (Number.isFinite(iqr) && iqr > 0) {
-        const lowFence = q1 - (1.5 * iqr);
-        const highFence = q3 + (1.5 * iqr);
-        const inliers = sorted.filter((value) => value >= lowFence && value <= highFence);
-        outlierCount = sorted.length - inliers.length;
-        if (inliers.length >= 3) {
-          focusMin = inliers[0];
-          focusMax = inliers[inliers.length - 1];
-        }
-      }
-    }
-
-    let span = focusMax - focusMin;
-    if (!Number.isFinite(span) || span < settings.minSpan) {
-      span = settings.minSpan;
-      const center = (focusMin + focusMax) / 2;
-      focusMin = center - (span / 2);
-      focusMax = center + (span / 2);
-    }
-
-    const pad = Math.max(settings.minPadding, span * settings.paddingRatio);
-    return {
-      hasData: true,
-      min: focusMin - pad,
-      max: focusMax + pad,
-      outlierCount,
-      actualMin,
-      actualMax,
-    };
-  }
-
-  function getTimeScaleConfig(range, readings) {
-    const safeRange = range || '24h';
-    const dates = readings
-      .map((reading) => toDate(reading.recordedAt))
-      .filter(Boolean)
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    const spanMs = dates.length > 1
-      ? dates[dates.length - 1].getTime() - dates[0].getTime()
-      : 0;
-
-    const configByRange = {
-      live: {
-        unit: spanMs <= 6 * 60 * 60 * 1000 ? 'minute' : 'hour',
-        maxTicksLimit: 8,
-      },
-      '24h': {
-        unit: 'hour',
-        maxTicksLimit: 8,
-      },
-      '7d': {
-        unit: 'day',
-        maxTicksLimit: 8,
-      },
-      '30d': {
-        unit: 'day',
-        maxTicksLimit: 10,
-      },
-    };
-
-    const chosen = configByRange[safeRange] || configByRange['24h'];
-
-    return {
-      unit: chosen.unit,
-      maxTicksLimit: chosen.maxTicksLimit,
-      displayFormats: {
-        minute: 'h:mm a',
-        hour: safeRange === '24h' || safeRange === 'live' ? 'h a' : 'MMM d, h a',
-        day: 'MMM d',
-      },
-    };
   }
 
   // ===== Battery Health Assessment =====
@@ -437,7 +271,13 @@
     const voltageHealth = assessBatteryHealth(latest.voltage);
 
     // Temperature
-    el.tempValue.textContent = formatTemperature(latest.temperatureF);
+    el.tempValue.textContent = formatTemperature(latest.externalTemperatureF);
+    if (el.tempStatus) el.tempStatus.textContent = Number.isFinite(latest.externalTemperatureF)
+      ? 'External probe' : latest.externalTempStatus === 2 ? 'Probe fault' : latest.externalTempStatus === 0 ? 'Probe not detected' : 'No external reading uploaded';
+    const internal = latest.internalTemperatureF === undefined ? latest.temperatureF : latest.internalTemperatureF;
+    const onboard = document.getElementById('onboardTempMetric');
+    onboard.hidden = !Number.isFinite(internal);
+    document.getElementById('onboardTempValue').textContent = formatTemperature(internal);
 
     // Health
     el.healthValue.textContent = voltageHealth;
@@ -478,7 +318,7 @@
     }
 
     const voltages = readings.map((reading) => reading.voltage).filter((value) => value !== null && value !== undefined);
-    const temps = readings.map((reading) => reading.temperatureF).filter((value) => value !== null && value !== undefined);
+    const temps = readings.flatMap((reading) => [reading.internalTemperatureF === undefined ? reading.temperatureF : reading.internalTemperatureF, reading.externalTemperatureF]).filter((value) => value !== null && value !== undefined);
 
     const minVoltage = voltages.length > 0 ? Math.min(...voltages) : null;
     const maxVoltage = voltages.length > 0 ? Math.max(...voltages) : null;
@@ -493,287 +333,12 @@
     el.summaryRange.textContent = rangeLabel;
   }
 
-  // ===== Chart Visual Plugins =====
-  // Draws a thin vertical guide line through the active hover point,
-  // similar to a cursor readout on lab/telemetry instruments.
-  const verticalHoverLinePlugin = {
-    id: 'verticalHoverLine',
-    afterDatasetsDraw(chart) {
-      const active = chart.getActiveElements();
-      if (!active || !active.length) return;
-      const x = active[0].element.x;
-      const { ctx, chartArea } = chart;
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x, chartArea.top);
-      ctx.lineTo(x, chartArea.bottom);
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(231, 235, 243, 0.35)';
-      ctx.setLineDash([4, 4]);
-      ctx.stroke();
-      ctx.restore();
-    },
-  };
-
-  // ===== Chart Rendering =====
-  function renderChart(data, selectedRange) {
-    const readings = (data && Array.isArray(data.readings)) ? data.readings : [];
-    if (!readings.length) {
-      showChartNotice('');
-      if (appState.chart) {
-        appState.chart.destroy();
-        appState.chart = null;
-      }
-      return;
-    }
-
-    const sortedReadings = readings
-      .slice()
-      .sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
-
-    const voltagePoints = sortedReadings.map((reading) => ({
-      x: new Date(reading.recordedAt).getTime(),
-      y: reading.voltage,
-      recordedAt: reading.recordedAt,
-    }));
-
-    const temperaturePoints = sortedReadings.map((reading) => ({
-      x: new Date(reading.recordedAt).getTime(),
-      y: reading.temperatureF === undefined ? null : reading.temperatureF,
-      recordedAt: reading.recordedAt,
-    }));
-
-    const voltageValues = readings
-      .map((reading) => reading.voltage)
-      .filter((value) => Number.isFinite(value));
-    const temperatureValues = readings
-      .map((reading) => reading.temperatureF)
-      .filter((value) => Number.isFinite(value));
-
-    const voltageBounds = calculateAxisBounds(voltageValues, {
-      robust: true,
-      paddingRatio: 0.12,
-      minPadding: 0.05,
-      minSpan: 0.2,
-    });
-    const temperatureBounds = calculateAxisBounds(temperatureValues, {
-      robust: false,
-      paddingRatio: 0.15,
-      minPadding: 1,
-      minSpan: 3,
-    });
-
-    if (voltageBounds.outlierCount > 0) {
-      showChartNotice(
-        `Voltage scale is focused on typical readings; ${voltageBounds.outlierCount} outlier reading` +
-        `${voltageBounds.outlierCount === 1 ? '' : 's'} remain visible outside the focused trend range.`
-      );
-    } else {
-      showChartNotice('');
-    }
-
-    const rangeForChart = selectedRange || (data && data.range) || appState.selectedRange;
-    const timeScale = getTimeScaleConfig(rangeForChart, sortedReadings);
-    const shouldDecimate = (rangeForChart === '7d' || rangeForChart === '30d') && sortedReadings.length > 800;
-
-    const ctx = el.historyChart.getContext('2d');
-    if (appState.chart) {
-      appState.chart.destroy();
-    }
-
-    appState.chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [
-          {
-            label: 'Voltage (V)',
-            data: voltagePoints,
-            parsing: false,
-            borderColor: '#f2a530',
-            backgroundColor: 'rgba(242, 165, 48, 0.08)',
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHitRadius: 12,
-            pointBackgroundColor: '#f2a530',
-            pointHoverBackgroundColor: '#f2a530',
-            pointHoverBorderColor: '#0a0f1a',
-            pointHoverBorderWidth: 2,
-            tension: 0,
-            yAxisID: 'y',
-            fill: false,
-          },
-          {
-            label: 'Temperature (°F)',
-            data: temperaturePoints,
-            parsing: false,
-            borderColor: '#5b8dc9',
-            backgroundColor: 'rgba(91, 141, 201, 0.08)',
-            borderWidth: 2,
-            borderDash: [6, 3],
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHitRadius: 12,
-            pointBackgroundColor: '#5b8dc9',
-            pointHoverBackgroundColor: '#5b8dc9',
-            pointHoverBorderColor: '#0a0f1a',
-            pointHoverBorderWidth: 2,
-            tension: 0,
-            yAxisID: 'y1',
-            fill: false,
-            spanGaps: false,
-          },
-        ],
-      },
-      plugins: [verticalHoverLinePlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        normalized: true,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        hover: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          decimation: {
-            enabled: shouldDecimate,
-            algorithm: 'lttb',
-            threshold: 900,
-            samples: rangeForChart === '30d' ? 550 : 700,
-          },
-          legend: {
-            display: true,
-            position: 'top',
-            align: 'end',
-            labels: {
-              color: '#e7ebf3',
-              font: {
-                size: 12,
-                weight: '600',
-              },
-              padding: 16,
-              usePointStyle: true,
-              pointStyle: 'line',
-              boxWidth: 24,
-            },
-          },
-          tooltip: {
-            enabled: true,
-            mode: 'index',
-            intersect: false,
-            backgroundColor: 'rgba(10, 15, 26, 0.95)',
-            titleColor: '#e7ebf3',
-            bodyColor: '#93a3bf',
-            borderColor: '#25334d',
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 6,
-            displayColors: true,
-            usePointStyle: true,
-            boxPadding: 4,
-            titleFont: { size: 12, weight: '700' },
-            bodyFont: { size: 12 },
-            callbacks: {
-              title(context) {
-                return formatTooltipTitle(context, rangeForChart);
-              },
-              label(context) {
-                const datasetLabel = context.dataset && context.dataset.label ? context.dataset.label : '';
-                const value = context.parsed.y;
-                if (value === null || value === undefined) return `${datasetLabel}: —`;
-                if (datasetLabel.includes('Voltage')) {
-                  return `${datasetLabel}: ${formatVoltage(value)} V`;
-                }
-                if (datasetLabel.includes('Temperature')) {
-                  return `${datasetLabel}: ${formatTemperature(value)} °F`;
-                }
-                return `${datasetLabel}: ${value}`;
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            type: 'time',
-            display: true,
-            time: {
-              unit: timeScale.unit,
-              displayFormats: timeScale.displayFormats,
-            },
-            grid: {
-              color: 'rgba(147, 163, 191, 0.08)',
-              tickColor: 'rgba(147, 163, 191, 0.2)',
-            },
-            border: {
-              color: 'rgba(147, 163, 191, 0.25)',
-            },
-            ticks: {
-              color: '#93a3bf',
-              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: timeScale.maxTicksLimit,
-            },
-          },
-          y: {
-            type: 'linear',
-            display: true,
-            position: 'left',
-            min: voltageBounds.hasData ? voltageBounds.min : undefined,
-            max: voltageBounds.hasData ? voltageBounds.max : undefined,
-            title: {
-              display: true,
-              text: 'Voltage (V)',
-              color: '#f2a530',
-              font: { weight: 'bold', size: 12 },
-            },
-            grid: {
-              color: 'rgba(147, 163, 191, 0.08)',
-            },
-            border: {
-              color: 'rgba(147, 163, 191, 0.25)',
-            },
-            ticks: {
-              color: '#93a3bf',
-              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
-              callback(value) {
-                return AXIS_2DP_FORMATTER.format(Number(value));
-              },
-            },
-          },
-          y1: {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            min: temperatureBounds.hasData ? temperatureBounds.min : undefined,
-            max: temperatureBounds.hasData ? temperatureBounds.max : undefined,
-            title: {
-              display: true,
-              text: 'Temperature (°F)',
-              color: '#5b8dc9',
-              font: { weight: 'bold', size: 12 },
-            },
-            grid: {
-              drawOnChartArea: false,
-            },
-            border: {
-              color: 'rgba(147, 163, 191, 0.25)',
-            },
-            ticks: {
-              color: '#93a3bf',
-              font: { size: 11, family: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" },
-              callback(value) {
-                return AXIS_1DP_FORMATTER.format(Number(value));
-              },
-            },
-          },
-        },
-      },
-    });
+  // Same sample-by-sample SVG chart as the local Hub control center.
+  function renderChart(data) {
+    const readings = data && Array.isArray(data.readings) ? data.readings : [];
+    SentinelChart.render(el.historyChart, readings, appState.selectedNodeId + ':' + appState.selectedRange);
+    showChartNotice(data && data.truncated
+      ? `Showing the newest ${data.limit} readings in this range. Select a shorter range for more detail.` : '');
   }
 
   // ===== Data Fetching =====

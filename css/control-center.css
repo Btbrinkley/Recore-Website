@@ -568,3 +568,17 @@
     opacity: 0.25;
   }
 }
+
+/* Mirrors the local Hub's voltage/temperature plot and separate RSSI strip. */
+.cc-chart { height:auto; min-height:280px; }
+#historyChart .spark { min-height:280px; background:linear-gradient(180deg,rgba(56,217,150,.08),transparent); border-radius:10px; }
+#historyChart svg { display:block; width:100%; height:auto; min-height:280px; }
+#historyChart .chartLegend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; margin-top:8px; color:#92a6ba; }
+#historyChart .legendItem { display:flex; align-items:center; gap:5px; }
+#historyChart .legendSwatch { width:18px; height:3px; border-radius:2px; }
+#historyChart .legendVoltage { background:#38d996; }
+#historyChart .legendTemp { background:#a78bfa; }
+#historyChart .legendExternal { background:#4da3ff; }
+#historyChart .legendRssi { background:#ffb020; }
+#historyChart .sparkMeta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-top:8px; color:#92a6ba; font-size:12px; }
+#onboardTempMetric[hidden] { display:none; }
