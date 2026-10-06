@@ -1,6 +1,6 @@
 /* LevelUp product page */
 .lu-hero-figure{margin:40px 0 0;}
-.lu-hero-figure svg{width:100%;height:auto;display:block;border-radius:16px;border:1px solid var(--border);box-shadow:0 30px 80px rgba(0,0,0,.45);}
+.lu-hero-figure svg,.lu-hero-figure img{width:100%;height:auto;display:block;border-radius:16px;border:1px solid var(--border);box-shadow:0 30px 80px rgba(0,0,0,.45);}
 .lu-hero-figure figcaption{font-size:.8rem;color:var(--planned);margin-top:10px;text-align:center;}
 
 .lu-points{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:28px;}
