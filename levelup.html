@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LevelUp | ReCore Technology</title>
+  <meta name="description" content="LevelUp is a Bluetooth leveling monitor for travel trailers. It shows side-to-side and front-to-back level live in the tow vehicle and tells you how many leveling pads to use and how far to move the tongue jack.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="LevelUp | ReCore Technology">
+  <meta property="og:description" content="Level your trailer on the first try: live level, pad counts and tongue-jack guidance from the driver's seat.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0f1a">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/levelup.css?v=2">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav-wrap" aria-label="Primary">
+      <a class="brand" href="index.html">
+        <img src="assets/logo.png" alt="ReCore Technology" class="brand-logo">
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">&#9776;</button>
+      <ul class="nav-links" id="primary-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="sentinel.html">Sentinel</a></li>
+        <li><a href="platform.html">Platform</a></li>
+        <li><a href="development.html">Development</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <a class="nav-cta" href="about.html#contact">Request a Demo</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow">Vehicle Core &middot; LevelUp</p>
+        <h1>Level your trailer on the first try</h1>
+        <p class="lead">LevelUp shows how level your trailer is, live, on a screen in the tow vehicle while you back into the site. It tells you how many leveling pads to put under which tires and how far to move the tongue jack, so you stop guessing, climbing out to check a bubble level, and pulling forward to try again.</p>
+        <span class="status status-working">Working prototype</span>
+        <figure class="lu-hero-figure">
+          <img src="assets/levelup/hero-dash.jpg" width="1536" height="1024" style="width:100%;height:auto;aspect-ratio:3/2" alt="LevelUp handheld display mounted on a truck dashboard at dusk, showing the trailer level readout, with the trailer visible in the rear-view mirror as it is backed into a campsite." fetchpriority="high">
+          <figcaption>Mockup. The display shows LevelUp's real interface.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container lu-problem">
+        <div>
+          <p class="eyebrow">The Problem</p>
+          <h2>Leveling a trailer is a guessing game</h2>
+          <p>A trailer that sits a degree or two off level is more than an annoyance: doors swing on their own, showers and sinks drain slowly, you sleep on a slope, and absorption refrigerators need to be close to level to cool properly. The usual routine looks like this:</p>
+        </div>
+        <ol class="lu-steps">
+          <li>Back into the site and stop.</li>
+          <li>Climb out and set a bubble level on the floor or the tongue.</li>
+          <li>Guess how many blocks the low side needs.</li>
+          <li>Pull forward, stack blocks, back up onto them.</li>
+          <li>Climb out and check again. Repeat.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">How LevelUp Solves It</p>
+        <h2>The answer is on the screen before you get out</h2>
+        <div class="lu-points">
+          <div class="lu-point"><div class="lu-icon">&#9675;</div><h3>Live level from the driver's seat</h3><p>Side-to-side and front-to-back level update ten times a second while you back in, on bubble levels you can read at a glance.</p></div>
+          <div class="lu-point"><div class="lu-icon">#</div><h3>Exactly how many pads, and where</h3><p>LevelUp converts the tilt into inches using your trailer's wheel track width and says how many 1" pads go under the curb-side or road-side tires.</p></div>
+          <div class="lu-point"><div class="lu-icon">&#8597;</div><h3>Tongue jack guidance</h3><p>After you unhitch, it tells you whether to raise or lower the tongue jack and by how much, measured at the coupler.</p></div>
+          <div class="lu-point"><div class="lu-icon">&#10003;</div><h3>Green means done</h3><p>Each level turns green within half a degree of level, so there is no squinting at a bubble to decide whether it's close enough.</p></div>
+          <div class="lu-point"><div class="lu-icon">&#9889;</div><h3>Nothing to switch on</h3><p>The sensor runs from the trailer's 12 V system, sleeps when the trailer is parked and wakes itself the moment the trailer starts moving.</p></div>
+          <div class="lu-point"><div class="lu-icon">&#9881;</div><h3>Calibrate once</h3><p>Park on known-level ground and tap "Set level here." The sensor stores it, so every display uses the same calibration.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">Two Ways to See It</p>
+        <h2>On your phone or on a dedicated display</h2>
+        <p>The sensor talks to both at the same time, so one person can watch the handheld on the dash while another walks around with a phone.</p>
+        <div class="lu-devices">
+          <div class="lu-device">
+            <div class="lu-phone"><img src="assets/levelup/phone-screen.png" alt="LevelUp iPhone app showing the trailer front and side views, a yellow side-to-side level calling for 2 pads under the curb-side tires, and a green front-to-back level" loading="lazy" width="780" height="1688"></div>
+            <h3>iPhone app</h3>
+            <p>A SwiftUI app with the same views, settings and calibration. Working prototype; not yet on the App Store.</p>
+          </div>
+          <div class="lu-device">
+            <div class="lu-handheld"><img src="assets/levelup/handheld-screen.png" alt="LevelUp handheld display showing the trailer views, bubble levels, 2 pads needed under the curb-side tires, and level front to back" loading="lazy" width="960" height="720"></div>
+            <h3>Handheld display</h3>
+            <p>A 3.2" ESP32 touchscreen in a 3D-printed case with its own rechargeable battery and USB-C charging. No phone, app store or account required.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <p class="eyebrow">How It Works</p>
+        <h2>One small sensor, any number of screens</h2>
+        <div class="lu-flow">
+          <div class="card"><h3>Sensor in the trailer</h3><p>An ESP32 and a 3-axis accelerometer bolted flat to the floor, powered from the house battery. It measures which way gravity pulls, the most stable reference for a parked trailer.</p></div>
+          <div class="lu-arrow" aria-hidden="true">&rarr;</div>
+          <div class="card"><h3>Bluetooth, 10 times a second</h3><p>The sensor streams calibrated tilt over Bluetooth Low Energy. Up to three screens can connect at once.</p></div>
+          <div class="lu-arrow" aria-hidden="true">&rarr;</div>
+          <div class="card"><h3>Advice on the screen</h3><p>Each display turns tilt into pads and jack inches using your trailer's measurements, then shows what to do next.</p></div>
+        </div>
+        <figure class="lu-figure" style="margin:36px 0 0">
+          <img src="assets/levelup/sensor-box.jpg" alt="Top view of the LevelUp sensor box: ESP32 board, GY-521 accelerometer, 12 V to 5 V converter, screw terminals and wake button, with color-coded wiring" loading="lazy">
+          <figcaption>Sensor box layout: ESP32, GY-521 accelerometer, 12 V to 5 V converter and fused screw terminals.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">Current Status</p>
+        <h2>Where LevelUp stands today</h2>
+        <div class="lu-status">
+          <div class="card"><span class="status status-working">Working</span>
+            <ul><li>Sensor firmware with wake-on-motion</li><li>Handheld display</li><li>iPhone app (prototype)</li><li>Phone and handheld connected together</li></ul></div>
+          <div class="card"><span class="status status-testing">In progress</span>
+            <ul><li>Sensor enclosure on the trailer's 12 V system</li><li>3D-printed handheld case</li><li>Bluetooth range test from inside the aluminum body to the cab</li></ul></div>
+          <div class="card"><span class="status status-planned">Planned</span>
+            <ul><li>Tap-to-wake on the handheld</li><li>A larger "command center" display with tank and battery levels</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" style="text-align:center">
+      <div class="container">
+        <h2>Interested in LevelUp?</h2>
+        <p>LevelUp is being field-tested on a 1985 Airstream Safari. If you'd like to follow along or try one, get in touch.</p>
+        <div class="btn-row" style="justify-content:center">
+          <a class="btn btn-primary" href="mailto:info@recoretechnology.com?subject=LevelUp">Contact Us</a>
+          <a class="btn btn-secondary" href="development.html#field-projects">Development Journal</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <svg viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="20" r="3" fill="currentColor"/></svg>
+            ReCore Technology
+          </a>
+          <p>Modular monitoring and control systems for vehicles, equipment, farms, and remote assets. Sentinel is our first product line, currently in prototype and field-testing.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Site</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="sentinel.html">Sentinel</a></li>
+              <li><a href="platform.html">Platform</a></li>
+              <li><a href="development.html">Development</a></li>
+              <li><a href="about.html">About &amp; Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Project</h4>
+            <ul>
+              <li><a href="mailto:info@recoretechnology.com">Contact Us</a></li>
+              <li><a href="development.html#milestones">Development Journal</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; <span data-year>2026</span> ReCore Technology. All rights reserved.</span>
+        <span>Prototype &amp; field-testing stage.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>
