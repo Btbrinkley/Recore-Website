@@ -19,6 +19,11 @@ css/styles.css      Shared stylesheet (colors, layout, components, responsive ru
 js/main.js          Mobile nav toggle + footer year
 assets/favicon.svg  ReCore logo mark (favicon)
 robots.txt          Search engine crawl rules
+control-center.html Sentinel Remote Control Center (the hub's dashboard, fed from the cloud)
+js/hub-dashboard-core.js, css/hub-dashboard.css
+                    GENERATED from the hub firmware by tools/sync-hub-dashboard.cjs; don't edit
+js/sentinel-dashboard.js  Cloud -> hub data adapter for the Control Center
+js/sentinel-demo.js       Sample data (control-center.html?demo=1)
 ```
 
 There is no build step. Every page is plain, semantic HTML that references the shared stylesheet and script directly.
@@ -52,3 +57,17 @@ Steps:
 - The Contact section on the About page currently points to this GitHub repository, since no dedicated public contact email exists in the project yet. Add a real contact method before wider launch if one becomes available.
 # Recore-Website
 Website for Recore products
+
+## Sentinel Control Center
+
+`control-center.html` draws the same gauges, device cards and charts as the
+Sentinel Hub's own dashboard by reusing the hub's code. After the hub dashboard
+changes, re-sync it from the ReCore repo:
+
+```
+node tools/sync-hub-dashboard.cjs ../ReCore/sentinel/firmware/sentinel-hub/src/web_server.cpp
+node tests/control-center.test.cjs
+```
+
+`?site=…&hub=…` selects which site/hub to show (default Cotton / Home);
+`?demo=1` shows sample data.

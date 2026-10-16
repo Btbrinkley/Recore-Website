@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sentinel Remote Control Center | ReCore Technology</title>
-  <meta name="description" content="Remote monitoring dashboard for Sentinel field-test sites. Live telemetry, historical charts, and real-time alerts.">
+  <meta name="description" content="Remote view of a Sentinel field-test site: the same battery gauges, device cards and history charts as the hub, through the cloud.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <meta property="og:title" content="Sentinel Remote Control Center">
   <meta property="og:description" content="Monitor Sentinel power nodes remotely from the cloud dashboard.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#0a0f1a">
   <link rel="stylesheet" href="css/styles.css?v=20260928-history2">
-  <link rel="stylesheet" href="css/control-center.css?v=20260928-history2">
-  <!-- Chart.js for historical data visualization -->
+  <link rel="stylesheet" href="css/hub-dashboard.css?v=20261016-hubmirror">
+  <link rel="stylesheet" href="css/control-center.css?v=20261016-hubmirror">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -33,180 +33,27 @@
     </nav>
   </header>
 
-  <main id="main">
-    <!-- Page header with status -->
-    <div class="cc-header">
-      <div class="container">
-        <div class="cc-header-top">
-          <div class="cc-title">
-            <h1>Sentinel Remote Control Center</h1>
-            <div class="cc-badges">
-              <span class="cc-status-badge cc-status-proto">
-                Prototype
-              </span>
-              <span class="cc-status-badge" id="dataModeBadge">
-                Loading...
-              </span>
-            </div>
-          </div>
-          <div class="cc-header-meta">
-            <div class="cc-header-meta-item">
-              <span class="cc-header-meta-label">Cloud Connection</span>
-              <span class="cc-header-meta-value" id="cloudStatus">Checking...</span>
-            </div>
-            <div class="cc-header-meta-item">
-              <span class="cc-header-meta-label">Last Refresh</span>
-              <span class="cc-header-meta-value" id="lastRefresh">—</span>
-            </div>
-          </div>
+  <div class="hubDash">
+    <main id="main">
+      <div class="headline">
+        <div>
+          <h2>Dashboard</h2>
+          <p>At-a-glance health across the Sentinel network, mirrored from the hub through the cloud.</p>
+          <p class="ccWhere">Site <b id="siteName">—</b> · Hub <b id="hubName">—</b> · <span id="cloudStatus" class="cloudState">Connecting…</span></p>
         </div>
-
-        <!-- Device navigation -->
-        <div class="cc-nav-bar">
-          <div class="cc-nav-item">
-            <span class="cc-nav-label">Site</span>
-            <span class="cc-nav-value" id="siteDisplay">—</span>
-          </div>
-          <div class="cc-nav-item">
-            <span class="cc-nav-label">Hub</span>
-            <span class="cc-nav-value" id="hubDisplay">—</span>
-          </div>
-          <div class="cc-nav-item">
-            <label class="cc-nav-label" for="nodeSelect">Node</label>
-            <select class="cc-nav-select" id="nodeSelect" aria-label="Select node">
-              <option value="">Loading…</option>
-            </select>
-          </div>
-        </div>
+        <div class="updated" id="updated">Waiting for data</div>
       </div>
-    </div>
-
-    <!-- Main content -->
-    <section class="section">
-      <div class="container">
-        <!-- State messages -->
-        <div id="stateMessages"></div>
-
-        <!-- Current Status Cards -->
-        <h2 class="cc-section-title">Current Status</h2>
-        <div class="cc-grid">
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">Battery Voltage</div>
-            <div class="cc-metric-value"><span id="voltageValue">—</span><span class="cc-metric-unit">V</span></div>
-            <div class="cc-metric-status" id="voltageStatus"></div>
-          </div>
-
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">External Probe Temperature</div>
-            <div class="cc-metric-value"><span id="tempValue">—</span><span class="cc-metric-unit">°F</span></div>
-            <div class="cc-metric-status" id="tempStatus"></div>
-          </div>
-          <div class="cc-metric-card" id="onboardTempMetric" hidden>
-            <div class="cc-metric-label">Onboard Temperature (SHT40)</div>
-            <div class="cc-metric-value"><span id="onboardTempValue">—</span><span class="cc-metric-unit">°F</span></div>
-          </div>
-
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">Battery Condition</div>
-            <div class="cc-metric-value" id="healthValue">—</div>
-            <div class="cc-metric-status" id="healthStatus"></div>
-          </div>
-
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">LoRa RSSI</div>
-            <div class="cc-metric-value"><span id="rssiValue">—</span><span class="cc-metric-unit">dBm</span></div>
-            <div class="cc-metric-status" id="rssiStatus"></div>
-          </div>
-
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">Last Report</div>
-            <div class="cc-metric-value" style="font-size: 1.1rem;" id="lastReportTime">—</div>
-            <div class="cc-metric-status" id="reportStatus"></div>
-          </div>
-
-          <div class="cc-metric-card">
-            <div class="cc-metric-label">Node Status</div>
-            <div class="cc-metric-value" style="font-size: 1.1rem;" id="nodeStatusText">—</div>
-            <div class="cc-metric-status cc-metric-status-offline" id="nodeOnlineStatus"></div>
-          </div>
-        </div>
-
-        <!-- Historical Chart -->
-        <h2 class="cc-section-title">Historical Data</h2>
-        <div class="cc-chart-container">
-          <div class="cc-chart-controls">
-            <button class="cc-range-btn active" data-range="24h">24 Hours</button>
-            <button class="cc-range-btn" data-range="7d">7 Days</button>
-            <button class="cc-range-btn" data-range="30d">30 Days</button>
-          </div>
-          <div class="cc-chart">
-            <div id="historyChart"></div>
-          </div>
-          <div class="cc-chart-note" id="chartOutlierNotice" hidden></div>
-        </div>
-
-        <!-- Range Summary -->
-        <h2 class="cc-section-title">Selected Range Summary</h2>
-        <div class="cc-summary-grid">
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Min Voltage</div>
-            <div class="cc-summary-value"><span id="summaryMinVoltage">—</span>V</div>
-          </div>
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Max Voltage</div>
-            <div class="cc-summary-value"><span id="summaryMaxVoltage">—</span>V</div>
-          </div>
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Min Temperature</div>
-            <div class="cc-summary-value"><span id="summaryMinTemp">—</span>°F</div>
-          </div>
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Max Temperature</div>
-            <div class="cc-summary-value"><span id="summaryMaxTemp">—</span>°F</div>
-          </div>
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Reading Count</div>
-            <div class="cc-summary-value" id="summaryCount">—</div>
-          </div>
-          <div class="cc-summary-item">
-            <div class="cc-summary-label">Range</div>
-            <div class="cc-summary-value" id="summaryRange">—</div>
-          </div>
-        </div>
-
-        <!-- Remote Controls (Disabled) -->
-        <h2 class="cc-section-title">Remote Control</h2>
-        <div class="cc-controls-panel">
-          <div class="cc-controls-header">
-            <h3>Node Commands</h3>
-            <span class="cc-dev-badge">In Development</span>
-          </div>
-          <div class="cc-controls-grid">
-            <div class="cc-control-item">
-              <label class="cc-control-label">Request Reading Now</label>
-              <button class="cc-control-btn" disabled title="In development">Request</button>
-            </div>
-            <div class="cc-control-item">
-              <label class="cc-control-label">Change Sample Interval</label>
-              <button class="cc-control-btn" disabled title="In development">Configure</button>
-            </div>
-            <div class="cc-control-item">
-              <label class="cc-control-label">Set Voltage Thresholds</label>
-              <button class="cc-control-btn" disabled title="In development">Set Limits</button>
-            </div>
-            <div class="cc-control-item">
-              <label class="cc-control-label">Restart Node</label>
-              <button class="cc-control-btn" disabled title="In development">Restart</button>
-            </div>
-            <div class="cc-control-item">
-              <label class="cc-control-label">Configure Alerts</label>
-              <button class="cc-control-btn" disabled title="In development">Configure</button>
-            </div>
-          </div>
-        </div>
+      <div class="summary">
+        <div class="summaryCard"><span>Known nodes</span><b id="sumNodes">0</b><em>All registered devices</em></div>
+        <div class="summaryCard"><span>Online</span><b id="sumOnline">0</b><em>Reporting normally</em></div>
+        <div class="summaryCard"><span>Attention</span><b id="sumAttention">0</b><em>Low, critical, or late</em></div>
+        <div class="summaryCard"><span>Last report</span><b id="sumLast">—</b><em>Most recent telemetry</em></div>
       </div>
-    </section>
-  </main>
+      <div class="dashTop"><div class="miniGrid" id="dashboardSummary"></div></div>
+      <div id="dashboardDetail"><div class="empty">Loading nodes from the cloud…</div></div>
+      <p class="ccFootnote">Prototype field test. Readings travel PowerNode → LoRa → hub → cloud, so this page can lag the hub by up to a minute. Commissioning and settings are done on the hub itself.</p>
+    </main>
+  </div>
 
   <footer class="site-footer">
     <div class="container">
@@ -257,11 +104,10 @@
   </script>
 
   <!-- Load dependencies in order -->
-  <script src="js/main.js?v=20260928-history2"></script>
-  <script src="js/config.js?v=20260928-history2"></script>
-  <script src="js/sentinel-mock.js?v=20260928-history2"></script>
-  <script src="js/sentinel-api.js?v=20260928-history2"></script>
-  <script src="js/sentinel-chart.js?v=20260928-history2"></script>
-  <script src="js/control-center.js?v=20260928-history2"></script>
+  <script src="js/main.js?v=20261016-hubmirror"></script>
+  <script src="js/config.js?v=20261016-hubmirror"></script>
+  <script src="js/sentinel-demo.js?v=20261016-hubmirror"></script>
+  <script src="js/hub-dashboard-core.js?v=20261016-hubmirror"></script>
+  <script src="js/sentinel-dashboard.js?v=20261016-hubmirror"></script>
 </body>
 </html>
