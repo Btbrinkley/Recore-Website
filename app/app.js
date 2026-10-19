@@ -262,6 +262,7 @@ function selectOrg(orgId) {
   watch(fs.collection(db, ...base, "nodes"), (q) => {
     S.nodes = q.docs.map((d) => ({id: d.id, ...d.data()}));
     render();
+    renderDiscovered();
     if (S.dialogNode) renderDialog(false);
   });
   watch(fs.collection(db, ...base, "discovered"), (q) => {
@@ -341,12 +342,15 @@ function nodeCard(n, now) {
 
 function renderDiscovered() {
   const el = $("discovered");
-  if (!S.discovered.length || !canAdmin()) {
+  // A device that is already registered (e.g. assigned after it was first heard) is not listed.
+  const registered = new Set(S.nodes.map((n) => n.id));
+  const list = S.discovered.filter((d) => !registered.has(d.id));
+  if (!list.length || !canAdmin()) {
     el.innerHTML = "";
     return;
   }
-  el.innerHTML = `<h2 class="dash-h2">Heard but not registered</h2><p class="app-sub">A receive-only hub heard these devices. Add only equipment you own.</p>` +
-    S.discovered.map((d) => `<div class="row-item"><span><b>${esc(d.hubName || d.id)}</b> <code>${esc(d.id)}</code> via ${esc(hubName(d.lastHubId))}, ${esc(timeAgo(d.lastHeardAt?.toMillis?.(), Date.now()))}</span>
+  el.innerHTML = `<h2 class="dash-h2">Heard but not registered</h2><p class="app-sub">Your hubs heard these devices, but they are not registered to this organization. Add only equipment you own.</p>` +
+    list.map((d) => `<div class="row-item"><span><b>${esc(d.hubName || d.id)}</b> <code>${esc(d.id)}</code> via ${esc(hubName(d.lastHubId))}, ${esc(timeAgo(d.lastHeardAt?.toMillis?.(), Date.now()))}</span>
       <button class="app-btn small" data-adopt="${esc(d.id)}" type="button">Add to my equipment</button></div>`).join("");
   el.querySelectorAll("[data-adopt]").forEach((b) => b.addEventListener("click", async () => {
     await call("adoptDiscoveredNode", {orgId: S.orgId, deviceUid: b.dataset.adopt});
@@ -401,7 +405,12 @@ async function renderDialog(reloadChart) {
     try {
       const readings = await loadHistory(n);
       if (S.dialogNode !== n.id) return;
-      window.SentinelChart.render($("ndChart"), readings, `${n.id}:${S.range}`);
+      // js/sentinel-chart.js declares `const SentinelChart` in a classic script, which is a
+      // global binding but not a window property.
+      // eslint-disable-next-line no-undef
+      const chart = window.SentinelChart || (typeof SentinelChart !== "undefined" ? SentinelChart : null);
+      if (!chart) throw new Error("Chart code did not load.");
+      chart.render($("ndChart"), readings, `${n.id}:${S.range}`);
     } catch (e) {
       $("ndChart").innerHTML = `<p class="app-sub">Could not load history: ${esc(friendly(e))}</p>`;
     }
