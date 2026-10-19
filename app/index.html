@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sentinel Customer Dashboard | ReCore Technology</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0f1a">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/styles.css?v=20261019-app4">
+  <link rel="stylesheet" href="../css/control-center.css?v=20261019-app4">
+  <link rel="stylesheet" href="app.css?v=20261019-app4">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav-wrap app-nav" aria-label="Account">
+      <a class="brand" href="../index.html"><img src="../assets/logo.png" alt="ReCore Technology" class="brand-logo"></a>
+      <div class="app-nav-right" id="accountBar" hidden>
+        <label class="sr-only" for="orgSelect">Organization</label>
+        <select id="orgSelect" class="app-select"></select>
+        <button class="app-btn ghost" id="signOutBtn" type="button">Sign out</button>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="app-main">
+    <div class="app-flash" id="flash" role="status" aria-live="polite" hidden></div>
+
+    <!-- Signed out -->
+    <section class="app-auth" id="authView" hidden>
+      <h1>Customer Login</h1>
+      <p class="app-sub">Sentinel pilot dashboard. Accounts are by invitation.</p>
+      <div class="app-tabs" role="tablist">
+        <button role="tab" type="button" data-auth-tab="signin" aria-selected="true">Sign in</button>
+        <button role="tab" type="button" data-auth-tab="signup" aria-selected="false">Create account</button>
+        <button role="tab" type="button" data-auth-tab="reset" aria-selected="false">Forgot password</button>
+      </div>
+      <form id="authForm" class="app-form" novalidate>
+        <label>Email <input type="email" id="authEmail" autocomplete="email" required></label>
+        <label id="pwRow">Password <input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
+        <button class="app-btn" id="authSubmit" type="submit">Sign in</button>
+        <p class="app-hint" id="authHint"></p>
+      </form>
+    </section>
+
+    <!-- Signed in, email not verified -->
+    <section class="app-auth" id="verifyView" hidden>
+      <h1>Check your email</h1>
+      <p>We sent a verification link to <b id="verifyEmail"></b>. Open it, then come back here.</p>
+      <div class="app-row">
+        <button class="app-btn" id="verifiedBtn" type="button">I've verified my email</button>
+        <button class="app-btn ghost" id="resendBtn" type="button">Resend link</button>
+      </div>
+    </section>
+
+    <!-- Signed in, no organization -->
+    <section class="app-auth" id="noOrgView" hidden>
+      <h1>No organization yet</h1>
+      <p>Your account is set up, but it isn't linked to any equipment. Ask the account owner or ReCore for an invitation, then open the link in the email.</p>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashView" hidden>
+      <div class="dash-head">
+        <div>
+          <h1 id="orgName">Dashboard</h1>
+          <p class="app-sub" id="orgMeta"></p>
+        </div>
+        <div class="dash-filters">
+          <label>Location <select id="locFilter" class="app-select"><option value="">All locations</option></select></label>
+          <label>Hub <select id="hubFilter" class="app-select"><option value="">All hubs</option></select></label>
+        </div>
+      </div>
+
+      <div class="dash-summary" id="summary"></div>
+      <h2 class="dash-h2">Hubs</h2>
+      <div class="hub-strip" id="hubStrip"></div>
+      <h2 class="dash-h2">Equipment</h2>
+      <div class="node-grid" id="nodeGrid"></div>
+      <div id="discovered"></div>
+
+      <details class="manage" id="managePanel">
+        <summary>Manage organization</summary>
+        <div id="manageBody"></div>
+      </details>
+    </section>
+  </main>
+
+  <dialog class="node-dialog" id="nodeDialog" aria-labelledby="ndTitle">
+    <div class="nd-head">
+      <div><h2 id="ndTitle"></h2><div class="app-sub" id="ndSub"></div></div>
+      <button class="app-btn ghost" type="button" id="ndClose" aria-label="Close">✕</button>
+    </div>
+    <div class="nd-metrics" id="ndMetrics"></div>
+    <div class="app-tabs" id="ndRanges">
+      <button type="button" data-range="24h" aria-selected="true">24 h</button>
+      <button type="button" data-range="7d" aria-selected="false">7 days</button>
+      <button type="button" data-range="30d" aria-selected="false">30 days</button>
+    </div>
+    <div class="nd-chart" id="ndChart"></div>
+    <dl class="nd-facts" id="ndFacts"></dl>
+    <div id="ndActions"></div>
+  </dialog>
+
+  <script src="../js/sentinel-chart.js?v=20261019-app4"></script>
+  <script type="module" src="app.js?v=20261019-app4"></script>
+</body>
+</html>

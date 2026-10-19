@@ -1,0 +1,7 @@
+# Cloudflare Pages response headers
+/app/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: same-origin
+  X-Robots-Tag: noindex
+  Cache-Control: no-cache
