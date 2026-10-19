@@ -76,3 +76,6 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.82em;color:var(--text-m
   .nd-facts{grid-template-columns:1fr}.nd-facts dd{margin-bottom:6px}
   .brand-logo{height:30px}
 }
+.nd-chart .chartLegend,.nd-chart .sparkMeta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;line-height:1.4;color:#92a6ba;margin-top:8px}
+.nd-chart .legendItem{display:inline-flex;align-items:center;gap:5px}
+.nd-chart .legendSwatch{display:inline-block;width:18px;height:3px;border-radius:2px}
