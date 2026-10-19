@@ -4,7 +4,7 @@
 // Cloud Function, which re-checks the user's role server-side.
 import {firebaseConfig, FUNCTIONS_REGION, FIREBASE_SDK, USE_EMULATORS} from "./firebase-config.js";
 import {
-  hubCloudState, nodeState, displayName, timeAgo, filterNodes, sortNodes, RANGES, RANGE_LIMIT, toChartReadings,
+  hubCloudState, nodeState, displayName, timeAgo, filterNodes, sortNodes, RANGES, RANGE_LIMIT,
 } from "./status.js";
 
 const $ = (id) => document.getElementById(id);
@@ -14,8 +14,9 @@ const RANK = {viewer: 1, admin: 2, owner: 3};
 const S = {
   user: null, orgs: {}, orgId: null, role: null, org: null,
   hubs: {}, nodes: [], locations: {}, members: [], discovered: [],
-  unsub: [], filter: {locationId: "", hubId: ""}, dialogNode: null, range: "24h",
+  unsub: [], filter: {locationId: "", hubId: ""}, selected: null,
 };
+const OrgDash = window.OrgDash; // org-dashboard.js (hub gauges and charts)
 
 let fb; // loaded SDK functions
 
@@ -230,6 +231,8 @@ function selectOrg(orgId) {
   S.members = [];
   S.discovered = [];
   S.filter = {locationId: "", hubId: ""};
+  S.selected = null;
+  OrgDash.reset();
   show("dashView");
   const {fs, db} = fb;
   const base = ["orgs", orgId];
@@ -263,7 +266,6 @@ function selectOrg(orgId) {
     S.nodes = q.docs.map((d) => ({id: d.id, ...d.data()}));
     render();
     renderDiscovered();
-    if (S.dialogNode) renderDialog(false);
   });
   watch(fs.collection(db, ...base, "discovered"), (q) => {
     S.discovered = q.docs.map((d) => ({id: d.id, ...d.data()}));
@@ -310,34 +312,19 @@ function render() {
     if (st.freshness !== "fresh") counts.stale++;
   }
   $("summary").innerHTML = [
-    ["Equipment", S.nodes.length, ""], ["Critical", counts.crit, counts.crit ? "bad" : ""],
-    ["Low", counts.low, counts.low ? "warn" : ""], ["No recent reading", counts.stale, counts.stale ? "warn" : ""],
-    ["Hubs offline", counts.hubOff, counts.hubOff ? "bad" : ""],
-  ].map(([k, v, c]) => `<div class="sum ${c}"><b>${v}</b><span>${k}</span></div>`).join("");
+    ["Equipment", S.nodes.length, "Registered devices"],
+    ["Attention", counts.crit + counts.low, `${counts.crit} critical · ${counts.low} low`],
+    ["No recent reading", counts.stale, "Past their expected report"],
+    ["Hubs offline", counts.hubOff, `of ${Object.keys(S.hubs).length} hubs`],
+  ].map(([k, v, e]) => `<div class="summaryCard"><span>${k}</span><b>${v}</b><em>${esc(e)}</em></div>`).join("");
 
-  $("nodeGrid").innerHTML = list.length ? list.map((n) => nodeCard(n, now)).join("") :
-    `<p class="app-sub">${S.nodes.length ? "Nothing matches these filters." : "No equipment has reported yet."}</p>`;
-  document.querySelectorAll("[data-node]").forEach((el) => el.addEventListener("click", () => openNode(el.dataset.node)));
-}
-
-function nodeCard(n, now) {
-  const st = nodeState(n, S.hubs, now);
-  const v = st.voltage === null ? "—" : st.voltage.toFixed(2);
-  const badges = [];
-  if (st.battery === "CRITICAL") badges.push(`<span class="pill bad">Battery critical</span>`);
-  else if (st.battery === "LOW") badges.push(`<span class="pill warn">Battery low</span>`);
-  else if (st.battery === "OK") badges.push(`<span class="pill good">Battery OK</span>`);
-  if (st.freshness === "stale") {
-    badges.push(st.reason === "hub-offline" ? `<span class="pill muted">Hub offline</span>` : `<span class="pill warn">No recent reading</span>`);
-  }
-  if (st.freshness === "never") badges.push(`<span class="pill muted">No readings</span>`);
-  const snoozed = n.alert && n.alert.snoozeUntilMs > now;
-  return `<button type="button" class="node-card sev${st.severity}" data-node="${esc(n.id)}">
-    <div class="nc-top"><span class="nc-name">${esc(displayName(n))}</span><span class="nc-volt">${v}<small> V</small></span></div>
-    <div class="app-sub">${esc(locName(n.locationId))} · ${esc(hubName(n.lastHubId || n.primaryHubId))}</div>
-    <div class="nc-badges">${badges.join("")}${snoozed ? `<span class="pill muted">Alerts snoozed</span>` : ""}</div>
-    <div class="nc-time">Measured ${esc(timeAgo(st.measuredMs, now))} <span>${esc(fmtTime(st.measuredMs))}</span></div>
-  </button>`;
+  OrgDash.update(list.map((n) => {
+    const st = nodeState(n, S.hubs, now);
+    return {uid: n.id, name: displayName(n), location: locName(n.locationId), via: hubName(n.lastHubId || n.primaryHubId),
+      hubCloud: st.hubCloud, latest: n.latest || null, measuredMs: st.measuredMs, rev: st.measuredMs,
+      expectedIntervalMin: n.expectedIntervalMin || null};
+  }), S.nodes.length ? "Nothing matches these filters." : "No equipment has reported yet.");
+  renderNodeActions();
 }
 
 function renderDiscovered() {
@@ -358,76 +345,57 @@ function renderDiscovered() {
   }));
 }
 
-// ------------------------------------------------------------ node detail
-function openNode(id) {
-  S.dialogNode = id;
-  S.range = "24h";
-  renderDialog(true);
-  const d = $("nodeDialog");
-  if (!d.open) d.showModal();
+// ------------------------------------------------------------ readings
+function readingFromDoc(d) {
+  const t = typeof d.measuredMs === "number" ? d.measuredMs : (d.measuredAt && d.measuredAt.toMillis ? d.measuredAt.toMillis() : NaN);
+  if (!Number.isFinite(t) || typeof d.voltage !== "number") return null;
+  const codes = {0: "OK", 1: "LOW", 2: "CRITICAL"};
+  const status = Number.isInteger(d.statusCode) && codes[d.statusCode] ? codes[d.statusCode] :
+    (d.status === "LOW" || d.status === "CRITICAL" ? d.status : "OK");
+  const onboard = d.internalTemperatureF !== undefined ? d.internalTemperatureF : d.temperatureF;
+  return {t, volts: d.voltage, tempF: typeof onboard === "number" ? onboard : null,
+    probeF: typeof d.externalTemperatureF === "number" ? d.externalTemperatureF : null,
+    rssi: Number.isInteger(d.rssi) ? d.rssi : null, sequence: Number.isInteger(d.sequence) ? d.sequence : 0, status};
 }
 
-async function loadHistory(n) {
+// range "recent": the newest 96 (only those after sinceMs); otherwise the window, newest first up to a cap.
+async function loadReadings(uid, range, sinceMs) {
   const {fs, db} = fb;
-  const cutoff = Date.now() - RANGES[S.range];
-  const q = fs.query(fs.collection(db, "orgs", S.orgId, "nodes", n.id, "readings"),
-      fs.where("measuredMs", ">=", cutoff), fs.orderBy("measuredMs", "desc"), fs.limit(RANGE_LIMIT[S.range]));
-  const snap = await fs.getDocs(q);
-  return toChartReadings(snap.docs.map((d) => ({id: d.id, ...d.data()})));
-}
-
-async function renderDialog(reloadChart) {
-  const n = S.nodes.find((x) => x.id === S.dialogNode);
-  if (!n) return;
-  const now = Date.now();
-  const st = nodeState(n, S.hubs, now);
-  const L = n.latest || {};
-  $("ndTitle").textContent = displayName(n);
-  $("ndSub").textContent = `${locName(n.locationId)} · primary hub ${hubName(n.primaryHubId)}`;
-  const temp = (x) => (typeof x === "number" ? x.toFixed(1) + " °F" : "—");
-  $("ndMetrics").innerHTML = [
-    ["Voltage", st.voltage === null ? "—" : st.voltage.toFixed(2) + " V"], ["Battery", st.battery],
-    ["External probe", temp(L.externalTemperatureF)], ["Onboard", temp(L.internalTemperatureF ?? L.temperatureF)],
-    ["Signal", typeof L.rssi === "number" ? L.rssi + " dBm" : "—"],
-    ["Last measurement", `${timeAgo(st.measuredMs, now)}<br><small>${esc(fmtTime(st.measuredMs))}</small>`],
-  ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
-  const heard = Object.entries(n.heardBy || {}).map(([h, x]) => `${esc(hubName(h))} (${typeof x.rssi === "number" ? x.rssi + " dBm, " : ""}${esc(timeAgo(x.at?.toMillis?.(), now))})`).join("<br>");
-  $("ndFacts").innerHTML = [
-    ["Hardware ID", `<code>${esc(n.id)}</code>`], ["Name on hub", esc(n.hubName || "—")],
-    ["Reported by", esc(hubName(n.lastHubId))], ["Heard by", heard || "—"],
-    ["Radio address", esc(n.internalAddress ?? "—")], ["Hub firmware", esc(L.firmwareVersion || "—")],
-    ["Time source", esc({"hub-clock": "hub clock", "receive-age": "hub receive time", "server-receipt": "cloud receipt"}[L.timeSource] || "—")],
-  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-  document.querySelectorAll("#ndRanges [data-range]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.range === S.range)));
-  renderNodeActions(n);
-  if (reloadChart) {
-    $("ndChart").innerHTML = `<p class="app-sub">Loading history…</p>`;
-    try {
-      const readings = await loadHistory(n);
-      if (S.dialogNode !== n.id) return;
-      // js/sentinel-chart.js declares `const SentinelChart` in a classic script, which is a
-      // global binding but not a window property.
-      // eslint-disable-next-line no-undef
-      const chart = window.SentinelChart || (typeof SentinelChart !== "undefined" ? SentinelChart : null);
-      if (!chart) throw new Error("Chart code did not load.");
-      chart.render($("ndChart"), readings, `${n.id}:${S.range}`);
-    } catch (e) {
-      $("ndChart").innerHTML = `<p class="app-sub">Could not load history: ${esc(friendly(e))}</p>`;
-    }
+  const col = fs.collection(db, "orgs", S.orgId, "nodes", uid, "readings");
+  let q;
+  if (range === "recent") {
+    q = sinceMs ?
+      fs.query(col, fs.where("measuredMs", ">", sinceMs), fs.orderBy("measuredMs", "desc"), fs.limit(96)) :
+      fs.query(col, fs.orderBy("measuredMs", "desc"), fs.limit(96));
+  } else {
+    q = fs.query(col, fs.where("measuredMs", ">=", Date.now() - RANGES[range]), fs.orderBy("measuredMs", "desc"),
+        fs.limit(RANGE_LIMIT[range]));
   }
+  const snap = await fs.getDocs(q);
+  const readings = snap.docs.map((d) => readingFromDoc(d.data())).filter(Boolean).reverse();
+  return {readings, capped: range !== "recent" && snap.docs.length >= RANGE_LIMIT[range]};
 }
 
-function renderNodeActions(n) {
+function renderNodeActions() {
+  const n = S.nodes.find((x) => x.id === (S.selected || OrgDash.selectedUid()));
+  if (!n) {
+    $("nodeActions").innerHTML = "";
+    return;
+  }
+  // Keep a half-typed settings form.
+  if ($("nodeActions").contains(document.activeElement) && document.activeElement.tagName === "INPUT" &&
+    $("nodeActions").dataset.uid === n.id) return;
+  $("nodeActions").dataset.uid = n.id;
   const now = Date.now();
   const snoozedUntil = n.alert && n.alert.snoozeUntilMs > now ? n.alert.snoozeUntilMs : 0;
-  let html = `<div class="nd-section"><h3>Alerts</h3><p class="app-sub">${snoozedUntil ? `Snoozed until ${esc(fmtTime(snoozedUntil))}.` :
+  let html = `<div class="nd-section"><h3>${esc(displayName(n))} · alerts</h3><p class="app-sub">${snoozedUntil ? `Snoozed until ${esc(fmtTime(snoozedUntil))}.` :
     (n.alert && n.alert.enabled === false ? "Alerts are off for this device." : "Alerts are on.")}</p>
     <div class="app-row">${[1, 3, 7].map((d) => `<button class="app-btn small ghost" data-snooze="${d}" type="button">Snooze ${d} d</button>`).join("")}
     ${snoozedUntil ? `<button class="app-btn small ghost" data-snooze="0" type="button">Resume</button>` : ""}</div></div>`;
   if (canAdmin()) {
     const locs = Object.values(S.locations).map((l) => `<option value="${esc(l.id)}" ${l.id === n.locationId ? "selected" : ""}>${esc(l.name)}</option>`).join("");
     const hubs = Object.values(S.hubs).map((h) => `<option value="${esc(h.id)}" ${h.id === n.primaryHubId ? "selected" : ""}>${esc(h.name || h.id)}</option>`).join("");
-    html += `<form class="nd-section app-form" id="nodeEdit"><h3>Settings</h3>
+    html += `<form class="nd-section app-form" id="nodeEdit"><h3>${esc(displayName(n))} · settings</h3>
       <label>Name <input name="name" maxlength="40" value="${esc(n.name || "")}" placeholder="${esc(n.hubName || n.id)}"></label>
       <label>Location <select name="locationId" class="app-select"><option value="">No location</option>${locs}</select></label>
       <label>Primary hub (commands and updates) <select name="primaryHubId" class="app-select">${hubs}</select></label>
@@ -436,8 +404,8 @@ function renderNodeActions(n) {
       <p class="app-hint">Sampling mode, expected voltage and calibration are changed on the hub's local Control Center; the cloud does not send radio commands yet.</p>
       <button class="app-btn" type="submit">Save</button></form>`;
   }
-  $("ndActions").innerHTML = html;
-  $("ndActions").querySelectorAll("[data-snooze]").forEach((b) => b.addEventListener("click", async () => {
+  $("nodeActions").innerHTML = html;
+  $("nodeActions").querySelectorAll("[data-snooze]").forEach((b) => b.addEventListener("click", async () => {
     await call("snoozeNode", {orgId: S.orgId, deviceUid: n.id, days: Number(b.dataset.snooze)});
     flash(Number(b.dataset.snooze) ? "Alerts snoozed." : "Alerts resumed.");
   }));
@@ -629,14 +597,12 @@ async function main() {
     S.filter.hubId = e.target.value;
     render();
   });
-  $("ndClose").addEventListener("click", () => $("nodeDialog").close());
-  $("nodeDialog").addEventListener("close", () => (S.dialogNode = null));
-  document.querySelectorAll("#ndRanges [data-range]").forEach((b) => b.addEventListener("click", () => {
-    S.range = b.dataset.range;
-    renderDialog(true);
-  }));
+  OrgDash.configure({loader: loadReadings, onSelect: (uid) => {
+    S.selected = uid;
+    renderNodeActions();
+  }});
   // Keep "x min ago" honest without new reads.
-  setInterval(() => S.orgId && !$("dashView").hidden && render(), 60000);
+  setInterval(() => S.orgId && !$("dashView").hidden && OrgDash.tick(), 15000);
   fb.auth.onAuthStateChanged(fb.authInst, onUser);
 }
 
