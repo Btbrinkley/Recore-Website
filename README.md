@@ -24,6 +24,8 @@ js/hub-dashboard-core.js, css/hub-dashboard.css
                     GENERATED from the hub firmware by tools/sync-hub-dashboard.cjs; don't edit
 js/sentinel-dashboard.js  Cloud -> hub data adapter for the Control Center
 js/sentinel-demo.js       Sample data (control-center.html?demo=1)
+app/                      Customer dashboard (sign-in, organizations, management)
+monitor/                  Sentinel Monitor: read-only installable phone app (see monitor/README.md)
 ```
 
 There is no build step. Every page is plain, semantic HTML that references the shared stylesheet and script directly.

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sentinel Monitor | ReCore Technology</title>
+  <meta name="description" content="ReCore Sentinel battery monitors — read-only phone view.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0f1a">
+  <meta name="color-scheme" content="dark">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sentinel">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="../css/styles.css?v=20261023-mon1">
+  <link rel="stylesheet" href="../css/hub-dashboard.css?v=20261023-mon1">
+  <link rel="stylesheet" href="monitor.css?v=20261023-mon1">
+</head>
+<body class="mon">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="mon-top">
+    <div class="mon-top-row">
+      <span class="mon-brand"><img src="icons/icon.svg" alt="" width="28" height="28"><b>Sentinel</b></span>
+      <div class="mon-top-right" id="accountBar" hidden>
+        <label class="sr-only" for="orgSelect">Organization</label>
+        <select id="orgSelect" class="mon-select" hidden></select>
+        <button class="mon-btn ghost small" id="signOutBtn" type="button">Sign out</button>
+      </div>
+    </div>
+    <div class="mon-fresh" id="fresh" role="status" aria-live="polite" hidden></div>
+  </header>
+
+  <main id="main" class="mon-main">
+    <div class="mon-flash" id="flash" role="alert" hidden></div>
+
+    <section class="mon-panel" id="bootView">
+      <p class="mon-muted">Loading…</p>
+    </section>
+
+    <!-- Signed out -->
+    <section class="mon-panel mon-auth" id="authView" hidden>
+      <h1>Sign in</h1>
+      <p class="mon-muted">Read-only view of your Sentinel monitors. Accounts are by invitation; to accept one or manage equipment, use the <a href="../app/">customer dashboard</a>.</p>
+      <form id="authForm" class="mon-form" novalidate>
+        <label>Email <input type="email" id="authEmail" autocomplete="username" inputmode="email" required></label>
+        <label id="pwRow">Password <input type="password" id="authPassword" autocomplete="current-password" required></label>
+        <button class="mon-btn" id="authSubmit" type="submit">Sign in</button>
+        <button class="mon-link" id="resetToggle" type="button">Forgot password?</button>
+      </form>
+    </section>
+
+    <section class="mon-panel mon-auth" id="verifyView" hidden>
+      <h1>Confirm your email</h1>
+      <p class="mon-muted">This account's email isn't verified yet. Open the link we emailed to <b id="verifyEmail"></b>, then tap below.</p>
+      <button class="mon-btn" id="verifiedBtn" type="button">I've verified it</button>
+    </section>
+
+    <section class="mon-panel mon-auth" id="noOrgView" hidden>
+      <h1>No equipment yet</h1>
+      <p class="mon-muted">This account isn't linked to any organization. Ask the owner for an invitation, then open it in the <a href="../app/">customer dashboard</a>.</p>
+    </section>
+
+    <!-- Overview -->
+    <section id="listView" hidden>
+      <div class="mon-props" id="propBar">
+        <label class="sr-only" for="propSelect">Property</label>
+        <select id="propSelect" class="mon-select"></select>
+        <div class="mon-seg" role="group" aria-label="View">
+          <button type="button" data-view="list" aria-pressed="true">List</button>
+          <button type="button" data-view="gauges" aria-pressed="false">Gauges</button>
+        </div>
+      </div>
+
+      <div class="mon-sum" id="summary"></div>
+      <div id="propOverview"></div>
+      <div id="hubLine" class="mon-hubs"></div>
+      <div id="filterNote"></div>
+      <ul class="mon-list" id="nodeList" aria-label="Monitors"></ul>
+      <div class="hubDash mon-gauges" id="gaugeWrap" hidden>
+        <div class="dashTop"><div class="miniGrid" id="dashboardSummary"></div></div>
+        <button class="mon-btn ghost mon-gauge-open" id="gaugeOpen" type="button" hidden></button>
+        <div id="dashboardDetail"></div>
+      </div>
+      <p class="mon-foot mon-muted" id="footNote"></p>
+    </section>
+
+    <!-- Device detail -->
+    <section id="detailView" hidden>
+      <button class="mon-btn ghost small mon-back" id="backBtn" type="button">‹ All monitors</button>
+      <div id="detailBody"></div>
+    </section>
+  </main>
+
+  <script src="../js/hub-dashboard-core.js?v=20261023-mon1"></script>
+  <script src="../app/org-dashboard.js?v=20261023-mon1"></script>
+  <script type="module" src="monitor.js?v=20261023-mon1"></script>
+</body>
+</html>
