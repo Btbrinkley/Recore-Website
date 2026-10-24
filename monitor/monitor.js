@@ -523,7 +523,7 @@ function renderList() {
   }));
 
   // all-properties overview
-  if (!M.prop && ready && (props.length > 1 || (props.length && unassigned))) {
+  if (M.view === "list" && !M.prop && ready && (props.length > 1 || (props.length && unassigned))) {
     const groups = [...props.map((l) => [l.id, l.name]), ...(unassigned ? [[NO_PROP, "No property set"]] : [])];
     $("propOverview").innerHTML = `<div class="mon-overview">${groups.map(([id, name]) => {
       const es = evals.filter((e) => propOf(e) === id);
@@ -790,6 +790,8 @@ function wireControls() {
       b.textContent = n ? `Full details for ${nameOf(n)} ›` : "";
     },
   });
+  new MutationObserver((muts) => muts.forEach((mu) => mu.addedNodes.forEach(bindInlineIn)))
+    .observe($("gaugeWrap"), {childList: true, subtree: true});
   $("gaugeOpen").addEventListener("click", (ev) => ev.currentTarget.dataset.uid && openDetail(ev.currentTarget.dataset.uid));
   // Ages ("12 min ago") and late/offline states advance without any reads.
   setInterval(() => {
@@ -798,6 +800,42 @@ function wireControls() {
       else renderAll();
     }
   }, 30000);
+}
+
+// The hub's gauge markup (hub-dashboard-core.js, generated from the firmware and
+// shared with /app/) uses inline on* attributes. The /monitor/ Content Security
+// Policy blocks inline script, so rebind those few known calls as real listeners.
+const INLINE_EVENTS = ["click", "keydown", "pointermove", "pointerdown", "pointerleave"];
+const INLINE_FNS = new Set(["selectDashboardNode", "setChartRange", "toggleDial", "dialKey", "chartHover", "chartClear", "chartKey"]);
+const INLINE_SEL = INLINE_EVENTS.map((e) => `[on${e}]`).join(",");
+function bindInline(el) {
+  for (const type of INLINE_EVENTS) {
+    const code = el.getAttribute(`on${type}`);
+    if (code === null) continue;
+    el.removeAttribute(`on${type}`);
+    const m = /^\s*([A-Za-z]+)\((.*)\)\s*;?\s*$/.exec(code);
+    if (!m || !INLINE_FNS.has(m[1])) continue;
+    const args = m[2].split(",").map((a) => a.trim()).filter(Boolean);
+    el.addEventListener(type, (ev) => {
+      const fn = window[m[1]];
+      if (typeof fn !== "function") return;
+      fn(...args.map((a) => a === "event" ? ev : a === "this" ? el : /^-?\d+(\.\d+)?$/.test(a) ? Number(a) : a.replace(/^'(.*)'$/, "$1")));
+      if (m[1] === "selectDashboardNode") revealGaugeDetail();
+    });
+  }
+}
+function bindInlineIn(root) {
+  if (root.nodeType !== 1) return;
+  if (root.matches(INLINE_SEL)) bindInline(root);
+  root.querySelectorAll(INLINE_SEL).forEach(bindInline);
+}
+// After a tap on a gauge, bring its details into view instead of leaving them below the grid.
+function revealGaugeDetail() {
+  requestAnimationFrame(() => {
+    const target = $("gaugeOpen").hidden ? $("dashboardDetail") : $("gaugeOpen");
+    const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({behavior: smooth ? "smooth" : "auto", block: "start"});
+  });
 }
 
 function registerServiceWorker() {

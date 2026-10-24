@@ -5,7 +5,7 @@
 // user's token; when offline the page says so instead of showing stored data.
 // The cache below holds only public static files (same for every visitor), so
 // nothing in it can expose one user's data to another or survive sign-out.
-const VERSION = "mon-20261023-1";
+const VERSION = "mon-20261023-2";
 const SHELL = [
   "./", "./index.html", "./monitor.css", "./monitor.js", "./status.js", "./chart.js", "./manifest.webmanifest",
   "./icons/icon.svg", "./icons/icon-192.png", "./icons/apple-touch-icon.png",

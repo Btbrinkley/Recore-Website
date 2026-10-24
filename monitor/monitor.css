@@ -172,3 +172,23 @@ button:focus-visible,select:focus-visible,svg:focus-visible,summary:focus-visibl
   .mon-tile b{font-size:1.25rem}
   .mon-sum{gap:5px}
 }
+
+/* Gauges view: compact cards, three across on a phone (hub card markup, restyled here only) */
+.mon-gauges .miniGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.mon-gauges .miniCard{grid-template-columns:1fr;justify-items:center;gap:0;padding:6px 4px 7px;border-radius:11px;text-align:center;min-width:0}
+.mon-gauges .miniCard>div:last-child{width:100%;min-width:0}
+.mon-gauges .gName{font-size:.78rem;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;margin-top:2px}
+.mon-gauges .gSub,.mon-gauges .gLimits,.mon-gauges .gSwapHint{display:none}
+.mon-gauges .gSwap{position:static;height:auto;margin-top:3px;overflow:visible}
+.mon-gauges .gFace{position:static;opacity:1!important;white-space:normal;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px}
+.mon-gauges .miniCard:hover .gFace,.mon-gauges .miniCard.active .gFace{opacity:1}
+.mon-gauges .gMeta{width:100%;margin-top:2px;font-size:.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mon-gauges .gMeta svg{display:none}
+.mon-gauges #dashboardDetail{scroll-margin-top:96px}
+.mon-gauges .mon-gauge-open{scroll-margin-top:96px;width:100%}
+@media (max-width:360px){
+  .mon-gauges .gDial{transform:scale(.84);transform-origin:top center;margin-bottom:-17px}
+}
+@media (min-width:640px){
+  .mon-gauges .miniGrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+}
