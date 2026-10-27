@@ -83,6 +83,17 @@ tr.hl td{background:var(--hl-soft)}
 tr.hl td.pin span{background:var(--hl);color:#1d1404}
 col.c-w{width:22%} col.c-g{width:64px} col.c-s{width:22%} col.c-d{width:20%}
 td.w input{font-family:var(--f-mono)}
+.gfield{min-width:220px;max-width:420px}
+.gfield input{font-family:var(--f-mono)}
+.glist{list-style:none;margin:0;padding:6px;max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.gitem{width:100%;display:grid;grid-template-columns:minmax(90px,auto) 52px minmax(0,1fr);gap:10px;align-items:start;text-align:left;background:transparent;border:0;border-radius:5px;padding:7px 8px;font-weight:400}
+.gitem:hover,.gitem:focus-visible{background:var(--hl-soft)}
+.gitem .gp{font-family:var(--f-mono);font-weight:600;color:var(--accent);overflow-wrap:anywhere}
+.gitem .gpin{font-family:var(--f-mono);font-weight:600;text-align:center;background:color-mix(in srgb,var(--gold) 35%,var(--sunk));border-radius:4px;padding:1px 4px}
+.gitem .gd{min-width:0;display:flex;flex-direction:column;gap:2px}
+.gitem .gd small{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.gitem mark{background:var(--hl);color:#1d1404;border-radius:2px;padding:0 1px}
+.gnone{padding:12px;color:var(--muted)}
 .empty-row td{padding:20px;text-align:center;color:var(--muted)}
 .side{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px}
 .face{padding:10px 12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -152,11 +163,19 @@ textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12p
       <select id="plugSel"></select>
     </div>
     <button class="primary" id="btnNew" type="button">New plug</button>
-    <span class="grow"></span>
+    <div class="field grow gfield">
+      <label for="gq">Find in all plugs</label>
+      <input id="gq" type="search" placeholder="Wire ID, signal or destination" autocomplete="off" aria-controls="gres">
+    </div>
     <button type="button" id="btnExport">Export CSV</button>
     <button type="button" class="ghost danger" id="btnDel">Delete plug</button>
     <button type="button" class="ghost" id="btnLock" title="Forget the passcode on this device">Lock</button>
   </div>
+
+  <section class="card gres" id="gres" hidden aria-live="polite">
+    <div class="card-h"><h2>Matches across all plugs</h2><span class="count" id="gcount"></span></div>
+    <ul class="glist" id="glist"></ul>
+  </section>
 
   <div id="blank" class="card blank" hidden>
     <strong>No plugs yet</strong>
@@ -512,6 +531,41 @@ function selectPlug(id){
   renderSelector(); buildPlug();
 }
 
+// ---------- Search across all plugs ----------
+const GFIELDS=[["w","Wire"],["s","Signal"],["d","Dest"],["n","Notes"],["g","AWG"]];
+function hiText(v,q){const i=v.toLowerCase().indexOf(q);if(i<0)return esc(v);return esc(v.slice(0,i))+"<mark>"+esc(v.slice(i,i+q.length))+"</mark>"+esc(v.slice(i+q.length));}
+function globalSearch(){
+  const raw=$("gq").value.trim(); const q=raw.toLowerCase();
+  if(!q){$("gres").hidden=true;return;}
+  const hits=[];
+  for(const id of plugIds()){const p=effective(id);const L=labels(p.count,p.scheme);
+    for(const lab of L){const d=pinData(p,lab);
+      const f=GFIELDS.filter(([k])=>(d[k]||"").toLowerCase().includes(q));
+      if(f.length) hits.push({id,p,lab,d,f,exact:wires(d).some(w=>w.toLowerCase()===q)});}}
+  hits.sort((a,b)=>(b.exact-a.exact)||String(a.p.plugId).localeCompare(String(b.p.plugId),undefined,{numeric:true}));
+  const shown=hits.slice(0,100);
+  $("gcount").textContent=hits.length?`${hits.length} pin${hits.length===1?"":"s"}${hits.length>100?" · first 100 shown":""}`:"";
+  $("glist").innerHTML=shown.length?shown.map((h,i)=>`<li><button type="button" class="gitem" data-i="${i}" data-plug="${h.id}" data-pin="${esc(h.lab)}">
+    <span class="gp">${esc(h.p.plugId||"(no ID)")}</span><span class="gpin">${esc(h.lab)}</span>
+    <span class="gd"><span>${h.d.w?hiText(h.d.w,q):'<small>no wire ID</small>'}</span>${h.f.filter(([k])=>k!=="w").map(([k,n])=>`<small>${n}: ${hiText(h.d[k],q)}</small>`).join("")}${!h.f.some(([k])=>k!=="w")&&(h.d.s||h.d.d)?`<small>${esc(h.d.s||"")}${h.d.s&&h.d.d?" → ":""}${esc(h.d.d||"")}</small>`:""}</span></button></li>`).join(""):`<li class="gnone">No pin in any plug mentions “${esc(raw)}”.</li>`;
+  $("gres").hidden=false;
+}
+function jumpTo(plug,pin){
+  if(S.cur!==plug) selectPlug(plug);
+  S.q="";$("q").value="";S.show="all";setShowBtns();refresh();
+  setHl(pin,"row");
+  const inp=rowEls[pin]&&rowEls[pin].querySelector('input[data-f="w"]');
+  if(inp){inp.focus({preventScroll:true});}
+  $("mainArea").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+$("gq").addEventListener("input",globalSearch);
+$("gq").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const b=$("glist").querySelector(".gitem");if(b)jumpTo(b.dataset.plug,b.dataset.pin);}
+  if(e.key==="ArrowDown"){const b=$("glist").querySelector(".gitem");if(b){e.preventDefault();b.focus();}}
+  if(e.key==="Escape"){$("gq").value="";globalSearch();}});
+$("glist").addEventListener("click",e=>{const b=e.target.closest(".gitem");if(b)jumpTo(b.dataset.plug,b.dataset.pin);});
+$("glist").addEventListener("keydown",e=>{const b=e.target.closest(".gitem");if(!b)return;const li=b.parentNode;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();const n=e.key==="ArrowDown"?li.nextElementSibling:li.previousElementSibling;if(n&&n.firstElementChild)n.firstElementChild.focus();else if(e.key==="ArrowUp")$("gq").focus();}});
+
 // ---------- Events ----------
 $("plugSel").addEventListener("change",e=>selectPlug(e.target.value));
 $("rows").addEventListener("input",e=>{
@@ -519,7 +573,7 @@ $("rows").addEventListener("input",e=>{
   queuePatch(S.cur,{pins:{[lab]:{[inp.dataset.f]:inp.value}}});
   refreshSoon();
 });
-let rT=null; function refreshSoon(){clearTimeout(rT);rT=setTimeout(()=>{refresh();},120);}
+let rT=null; function refreshSoon(){clearTimeout(rT);rT=setTimeout(()=>{refresh();if($("gq").value.trim())globalSearch();},120);}
 $("rows").addEventListener("focusin",e=>{const tr=e.target.closest("tr[data-pin]");if(tr)setHl(tr.dataset.pin);});
 $("rows").addEventListener("mouseover",e=>{const tr=e.target.closest("tr[data-pin]");if(tr&&tr.dataset.pin!==S.hl)setHl(tr.dataset.pin);});
 $("rows").addEventListener("mouseleave",()=>{const a=document.activeElement.closest&&document.activeElement.closest("tr[data-pin]");setHl(a?a.dataset.pin:null);});
