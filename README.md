@@ -26,7 +26,24 @@ js/sentinel-dashboard.js  Cloud -> hub data adapter for the Control Center
 js/sentinel-demo.js       Sample data (control-center.html?demo=1)
 app/                      Customer dashboard (sign-in, organizations, management)
 monitor/                  Sentinel Monitor: read-only installable phone app (see monitor/README.md)
+pin-tracker/              Connector Pin Tracker (unlisted, noindex; passcode-protected)
+functions/api/pins/       Pages Function API for the Pin Tracker, backed by D1
+_routes.json              Limits Functions to /api/pins/* so static pages stay free and unlimited
 ```
+
+## Connector Pin Tracker
+
+`/pin-tracker/` logs wire IDs against each contact of circular aircraft connectors.
+Data lives in the D1 database `pin-tracker` (table `plugs`, one row per plug, pins as JSON).
+
+One-time setup in the Cloudflare Pages project (Settings):
+
+1. Bindings → add D1 database binding: variable name `DB`, database `pin-tracker` (Production and Preview).
+2. Variables and Secrets → add secret `PIN_PASSCODE` (Production and Preview).
+3. Redeploy so the bindings take effect.
+
+Stays on the free Workers plan: only `/api/pins/*` invokes Functions (100,000/day free);
+going over a free limit returns errors, never charges.
 
 There is no build step. Every page is plain, semantic HTML that references the shared stylesheet and script directly.
 
