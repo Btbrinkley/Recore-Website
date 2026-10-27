@@ -546,7 +546,7 @@ document.querySelectorAll("[data-show]").forEach(b=>b.addEventListener("click",(
 
 // New plug dialog
 function fillTpl(){
-  $("n_tpl").innerHTML=FAMILIES.map((f,fi)=>`<optgroup label="${esc(f.fam)}">${f.items.map(([a,n])=>`<option value="${fi}:${a}">${esc(a)} — ${n} contacts</option>`).join("")}</optgroup>`).join("")+`<optgroup label="Other"><option value="custom">Custom contact count…</option></optgroup>`;
+  $("n_tpl").innerHTML=FAMILIES.map(f=>`<optgroup label="${esc(f.fam)}">${f.items.map(([a,n])=>`<option value="${f.id}:${a}">${esc(a)} — ${n} contacts</option>`).join("")}</optgroup>`).join("")+`<optgroup label="Other"><option value="custom">Custom contact count…</option></optgroup>`;
   $("n_tpl").value=DEFAULT_TPL;
 }
 function tplInfo(){
