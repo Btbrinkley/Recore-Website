@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<title>Connector Pin Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html{color-scheme:light}
+body{margin:0}
+
+/* Layout: work-bench split — entry sheet left, insert face right (sticky), stacks on phones */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --sunk:#e3e7ec; --line:#cfd6de; --fg:#18212b; --muted:#5b6876;
+  --accent:#1d5fc4; --accent-ink:#ffffff; --hl:#f0a21a; --hl-soft:#fdf0d6; --match:#2c9a5b;
+  --shell:#c9cfd6; --shell-edge:#9aa3ad; --insert:#7d3b26; --insert-edge:#5b2817; --hole:#26140d; --gold:#d8b25a; --pin-ink:#fbe9df;
+  --danger:#b3261e;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1419; --panel:#171e26; --sunk:#1f2832; --line:#2c3743; --fg:#e4e9ee; --muted:#93a0ad;
+  --accent:#5c9bff; --accent-ink:#06121f; --hl:#f5b33a; --hl-soft:#3a2d12; --match:#4cc581;
+  --shell:#4a535d; --shell-edge:#6b757f; --insert:#6a3220; --insert-edge:#4a2013; --hole:#1a0c07; --gold:#e0bd68; --pin-ink:#f6dfd2;
+  --danger:#ff7b72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1419; --panel:#171e26; --sunk:#1f2832; --line:#2c3743; --fg:#e4e9ee; --muted:#93a0ad;
+  --accent:#5c9bff; --accent-ink:#06121f; --hl:#f5b33a; --hl-soft:#3a2d12; --match:#4cc581;
+  --shell:#4a535d; --shell-edge:#6b757f; --insert:#6a3220; --insert-edge:#4a2013; --hole:#1a0c07; --gold:#e0bd68; --pin-ink:#f6dfd2;
+  --danger:#ff7b72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.02em;margin:0;line-height:1;text-transform:uppercase}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.status{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--panel);white-space:nowrap}
+.status.ok{color:var(--match);border-color:color-mix(in srgb,var(--match) 45%,var(--line))}
+.status.busy{color:var(--hl)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 9px;min-width:0}
+input:focus,select:focus,textarea:focus,button:focus-visible,.used-item:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select#plugSel{font-family:var(--f-mono);font-weight:600;min-width:200px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:5px;padding:7px 12px;border:1px solid var(--line);background:var(--sunk);color:var(--fg)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.5;cursor:default}
+.grow{flex:1}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1.05fr);gap:14px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card h2{font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.card-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:12px}
+.meta .wide{grid-column:1/-1}
+.search{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.search input{flex:1;min-width:180px;font-family:var(--f-mono)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;font-weight:500;padding:6px 10px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--sunk);color:var(--fg);font-weight:600}
+.hint{font-size:12px;color:var(--muted)}
+.tbl-wrap{overflow:auto;max-height:68vh}
+table{border-collapse:collapse;width:100%;min-width:720px}
+thead th{position:sticky;top:0;background:var(--sunk);font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);z-index:1}
+tbody td{padding:3px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);vertical-align:middle}
+tbody td input{width:100%;border-color:transparent;background:transparent;padding:5px 6px;font-size:13px}
+tbody td input:hover{border-color:var(--line)}
+tbody td input:focus{background:var(--bg)}
+td.pin{font-family:var(--f-mono);font-weight:600;width:52px;text-align:center;font-variant-numeric:tabular-nums}
+td.pin span{display:inline-block;min-width:34px;padding:2px 6px;border-radius:4px;background:var(--sunk)}
+tr.used td.pin span{background:color-mix(in srgb,var(--gold) 35%,var(--sunk))}
+tr.hl td{background:var(--hl-soft)}
+tr.hl td.pin span{background:var(--hl);color:#1d1404}
+col.c-w{width:22%} col.c-g{width:64px} col.c-s{width:22%} col.c-d{width:20%}
+td.w input{font-family:var(--f-mono)}
+.empty-row td{padding:20px;text-align:center;color:var(--muted)}
+.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px}
+.face{padding:10px 12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;width:100%}
+.faces figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.faces figcaption{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-align:center;display:flex;flex-direction:column;line-height:1.15}
+.faces figcaption small{font-family:var(--f-body);font-weight:400;font-size:11px;letter-spacing:0;text-transform:none;color:var(--muted)}
+.facesvg{width:100%;max-width:340px;height:auto;display:block;touch-action:manipulation}.readout{font-family:var(--f-mono);font-size:13px;min-height:42px;width:100%;border-top:1px dashed var(--line);padding:8px 2px 10px;color:var(--muted)}
+.readout b{color:var(--fg)}
+.pin-g{cursor:pointer}
+.pin-g circle.body{fill:var(--hole);stroke:var(--insert-edge);stroke-width:.6}
+.pin-g circle.tip{fill:var(--gold)}
+.pin-g text{fill:var(--pin-ink);font-family:var(--f-mono);font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none;opacity:.85}
+.pin-g.used circle.body{fill:color-mix(in srgb,var(--gold) 70%,var(--hole));stroke:var(--gold)}
+.pin-g.used text{fill:#1d1404;opacity:1}
+.pin-g.used circle.tip,.pin-g.hl circle.tip{display:none}
+.pin-g circle.tenmark{fill:none;stroke:var(--pin-ink);stroke-width:.9;opacity:.85}
+.pin-g.dim{opacity:.28}
+.pin-g.match circle.body{stroke:var(--match);stroke-width:1.6}
+.pin-g circle.ring{fill:none;stroke:var(--hl);stroke-width:0;transition:stroke-width .12s}
+.pin-g.hl circle.ring{stroke-width:2.4}
+.pin-g.hl circle.body{fill:var(--hl);stroke:var(--hl)}
+.pin-g.hl text{fill:#1d1404;opacity:1}
+@media (prefers-reduced-motion:reduce){.pin-g circle.ring{transition:none}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:0 12px 10px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:5px;border:1px solid var(--line)}
+.used-list{list-style:none;margin:0;padding:6px;max-height:34vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.used-item{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:start;padding:6px 8px;border-radius:5px;cursor:pointer}
+.used-item:hover,.used-item.hl{background:var(--hl-soft)}
+.used-item .p{font-family:var(--f-mono);font-weight:600;text-align:center;background:color-mix(in srgb,var(--gold) 35%,var(--sunk));border-radius:4px;padding:1px 4px}
+.used-item.hl .p{background:var(--hl);color:#1d1404}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-family:var(--f-mono);font-size:12px;padding:1px 7px;border-radius:3px;border:1px solid var(--line);background:var(--bg)}
+.used-item .sig{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.none{padding:14px;color:var(--muted);font-size:13px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,#000 45%,transparent);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto;display:flex;flex-direction:column}
+.modal h3{font-family:var(--f-display);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:20px;margin:0}
+.modal .mb{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .mb .wide{grid-column:1/-1}
+@media (max-width:480px){.modal .mb{grid-template-columns:1fr}}
+.modal .mh,.modal .mf{padding:12px 16px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.modal .mh{border-bottom:1px solid var(--line)}
+.modal .mf{border-top:1px solid var(--line);justify-content:flex-end}
+.err{color:var(--danger);font-size:12px;min-height:16px}
+.tpl-info{font-size:12px;color:var(--muted);background:var(--sunk);border-radius:5px;padding:8px 10px}
+textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px}
+.blank{padding:40px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:12px;align-items:center}
+.blank strong{font-family:var(--f-display);font-size:20px;letter-spacing:.04em;text-transform:uppercase;color:var(--fg)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Connector <span>Pin</span> Tracker</h1>
+      <div class="sub">Wire-to-contact map for circular aircraft connectors</div>
+    </div>
+    <span class="status" id="status">Starting…</span>
+  </header>
+
+  <div class="bar">
+    <div class="field grow" style="max-width:340px">
+      <label for="plugSel">Plug</label>
+      <select id="plugSel"></select>
+    </div>
+    <button class="primary" id="btnNew" type="button">New plug</button>
+    <span class="grow"></span>
+    <button type="button" id="btnExport">Export CSV</button>
+    <button type="button" class="ghost danger" id="btnDel">Delete plug</button>
+    <button type="button" class="ghost" id="btnLock" title="Forget the passcode on this device">Lock</button>
+  </div>
+
+  <div id="blank" class="card blank" hidden>
+    <strong>No plugs yet</strong>
+    <div>Create a plug, pick its insert arrangement, then start logging wire IDs against each contact.</div>
+    <button class="primary" type="button" id="btnNew2">New plug</button>
+  </div>
+
+  <div class="main" id="mainArea" hidden>
+    <section class="card" aria-label="Pin entries">
+      <div class="card-h">
+        <h2 id="plugTitle">—</h2>
+        <span class="count" id="plugCount"></span>
+      </div>
+      <div class="meta">
+        <div class="field"><label for="m_plugId">Plug ID</label><input id="m_plugId" autocomplete="off"></div>
+        <div class="field"><label for="m_part">Part number</label><input id="m_part" autocomplete="off" placeholder="e.g. D38999/26WD35PN"></div>
+        <div class="field"><label for="m_loc">Location / zone</label><input id="m_loc" autocomplete="off" placeholder="e.g. Sta 180, LH sidewall"></div>
+        <div class="field"><label for="m_desc">Description</label><input id="m_desc" autocomplete="off" placeholder="What it connects"></div>
+        <div class="field"><label>Arrangement</label><input id="m_arr" disabled></div>
+        <div class="field"><label for="m_layout">Numbering</label><select id="m_layout"><option value="spiral">Spiral from center</option><option value="rows">Rows, top to bottom</option></select></div>
+        <div class="field"><label for="m_dir">Spiral direction (from front)</label><select id="m_dir"><option value="cw">Clockwise</option><option value="ccw">Counter-clockwise</option></select></div>
+        <div class="field"><label for="m_start">Ring starts at (from front)</label><select id="m_start"><option value="211">Past 7 o'clock corner (standard spiral)</option><option value="0">12 o'clock (key)</option><option value="30">1 o'clock</option><option value="60">2 o'clock</option><option value="90">3 o'clock</option><option value="120">4 o'clock</option><option value="150">5 o'clock</option><option value="180">6 o'clock</option><option value="210">7 o'clock</option><option value="240">8 o'clock</option><option value="270">9 o'clock</option><option value="300">10 o'clock</option><option value="330">11 o'clock</option></select></div>
+      </div>
+      <div class="search">
+        <input id="q" type="search" placeholder="Search pin, wire ID, signal, destination…  (exact pin # jumps to it, Enter to edit)" autocomplete="off" aria-label="Search pins">
+        <div class="seg" role="group" aria-label="Rows to show">
+          <button type="button" data-show="all" aria-pressed="true">All</button>
+          <button type="button" data-show="used" aria-pressed="false">Used</button>
+          <button type="button" data-show="open" aria-pressed="false">Open</button>
+        </div>
+      </div>
+      <div class="tbl-wrap" id="tblWrap">
+        <table>
+          <colgroup><col><col class="c-w"><col class="c-g"><col class="c-s"><col class="c-d"><col></colgroup>
+          <thead><tr><th>Pin</th><th>Wire ID(s)</th><th>AWG</th><th>Signal / function</th><th>Destination</th><th>Notes</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="card" aria-label="Insert face">
+        <div class="card-h">
+          <h2>Insert face</h2>
+          <span class="count" id="faceR"></span>
+        </div>
+        <div class="face">
+          <div class="faces">
+            <figure><figcaption>Front · mating face<small>pins extruding</small></figcaption>
+              <svg id="faceMate" class="facesvg" viewBox="-112 -112 224 224" role="img" aria-label="Insert viewed from mating face"></svg></figure>
+            <figure><figcaption>Rear · wire side<small>contact insertion side · mirror of front</small></figcaption>
+              <svg id="faceRear" class="facesvg" viewBox="-112 -112 224 224" role="img" aria-label="Insert viewed from rear, wire side"></svg></figure>
+          </div>
+          <div class="readout" id="readout">Hover a contact or a row to inspect it.</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--hole)"></i>Open</span>
+          <span><i style="background:var(--gold)"></i>Wired</span>
+          <span><i style="background:var(--hl)"></i>Selected</span>
+          <span><i style="background:transparent;border:2px solid var(--match)"></i>Search match</span>
+        </div>
+      </section>
+      <section class="card" aria-label="Used pins">
+        <div class="card-h"><h2>Used pins</h2><span class="count" id="usedCount"></span></div>
+        <ul class="used-list" id="usedList"></ul>
+      </section>
+      <p class="hint" style="margin:0">Arcs mark every tenth contact (10, 20, 30…), matching the marks molded into the insert. If they don't line up with your insert, change the spiral direction or starting position for this plug.</p>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay" id="keyDlg" hidden>
+  <form class="modal" id="keyForm" novalidate>
+    <div class="mh"><h3>Enter passcode</h3></div>
+    <div class="mb"><div class="field wide"><label for="keyIn">Passcode</label><input id="keyIn" type="password" autocomplete="current-password"></div>
+      <div class="hint wide">This device remembers it until you press Lock.</div>
+      <div class="err wide" id="keyErr"></div></div>
+    <div class="mf"><button class="primary" type="submit">Unlock</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="newDlg" hidden>
+  <form class="modal" id="newForm" novalidate>
+    <div class="mh"><h3>New plug</h3><button type="button" class="ghost" data-close>Cancel</button></div>
+    <div class="mb">
+      <div class="field"><label for="n_id">Plug ID *</label><input id="n_id" autocomplete="off" placeholder="e.g. P204"></div>
+      <div class="field"><label for="n_part">Part number</label><input id="n_part" autocomplete="off" placeholder="optional"></div>
+      <div class="field wide"><label for="n_tpl">Insert arrangement</label><select id="n_tpl"></select></div>
+      <div class="field" id="n_customWrap" hidden><label for="n_count">Contact count</label><input id="n_count" type="number" min="1" max="200" value="20"></div>
+      <div class="field" id="n_schemeWrap" hidden><label for="n_scheme">Contact labels</label><select id="n_scheme"><option value="num">Numbers (1, 2, 3…)</option><option value="let">Letters (A, B, C… a, b…)</option></select></div>
+      <div class="field"><label for="n_insert">Insert type</label><select id="n_insert"><option value="pin">Pin contacts (P)</option><option value="socket">Socket contacts (S)</option></select></div>
+      <div class="field"><label for="n_loc">Location / zone</label><input id="n_loc" autocomplete="off"></div>
+      <div class="field wide"><label for="n_desc">Description</label><input id="n_desc" autocomplete="off"></div>
+      <div class="tpl-info wide" id="n_info"></div>
+      <div class="err wide" id="n_err"></div>
+    </div>
+    <div class="mf"><button type="button" class="ghost" data-close>Cancel</button><button class="primary" type="submit">Create plug</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="delDlg" hidden>
+  <div class="modal" role="dialog" aria-labelledby="delH">
+    <div class="mh"><h3 id="delH">Delete plug?</h3></div>
+    <div class="mb"><div class="wide" id="delMsg"></div></div>
+    <div class="mf"><button type="button" class="ghost" data-close>Keep it</button><button type="button" class="primary" id="delYes" style="background:var(--danger);border-color:var(--danger)">Delete</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="csvDlg" hidden>
+  <div class="modal">
+    <div class="mh"><h3>Export CSV</h3><button type="button" class="ghost" data-close>Close</button></div>
+    <div class="mb"><div class="wide"><textarea class="csv" id="csvText" readonly></textarea></div></div>
+    <div class="mf"><span class="hint grow" id="csvMsg"></span><button type="button" class="primary" id="csvCopy">Copy</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+// ---------- Templates ----------
+const FAMILIES=[
+ {id:"hex",fam:"Concentric hex — numbered from center (1 in the middle, spiraling out)",short:"Hex",scheme:"num",contact:"",layout:"spiral",items:[["7-pos",7],["19-pos",19],["37-pos",37],["61-pos",61],["91-pos",91],["127-pos",127]]},
+ {id:"d22",fam:"MIL-DTL-38999 Series III / IV — size 22D (high density)",short:"MIL-DTL-38999",scheme:"num",contact:"#22D",layout:"spiral",items:[["9-35",6],["11-35",13],["13-35",22],["15-35",37],["17-35",55],["19-35",66],["21-35",79],["23-35",100],["25-35",128]]},
+ {id:"d20",fam:"MIL-DTL-38999 — size 20",short:"MIL-DTL-38999",scheme:"let",contact:"#20",layout:"spiral",items:[["11-98",6],["13-98",10],["15-19",19],["17-26",26],["19-32",32],["21-41",41],["23-53",53],["25-61",61]]},
+ {id:"m26",fam:"MIL-DTL-26482 / MS3470 / MS3116 — size 20",short:"MIL-DTL-26482",scheme:"let",contact:"#20",layout:"spiral",items:[["10-6",6],["12-10",10],["14-19",19],["16-26",26],["18-32",32],["20-41",41],["22-55",55],["24-61",61]]},
+ {id:"m50",fam:"MIL-DTL-5015 / MS3106 — size 16",short:"MIL-DTL-5015",scheme:"let",contact:"#16",layout:"rows",items:[["14S-5",5],["16S-1",7],["18-1",10],["20-27",14],["22-14",19],["28-21",37]]}
+];
+const TPL={};
+FAMILIES.forEach(f=>f.items.forEach(([a,n])=>{const k=f.id+":"+a;TPL[k]={key:k,fam:f.fam,arr:a,count:n,scheme:f.scheme,contact:f.contact,layout:f.layout,short:f.short};}));
+const DEFAULT_TPL="hex:61-pos";
+
+function labels(n,scheme){
+  if(scheme==="num") return Array.from({length:n},(_,i)=>String(i+1));
+  const up="ABCDEFGHJKLMNPRSTUVWXYZ".split(""); const lo="abcdefghjkmnprstuvwxyz".split("");
+  const seq=[...up,...lo]; up.forEach(c=>seq.push(c+c)); lo.forEach(c=>seq.push(c+c));
+  while(seq.length<n) seq.push(String(seq.length+1));
+  return seq.slice(0,n);
+}
+// Returns contact centers in FRONT-VIEW coordinates (mating face, pins extruding, key at 12 o'clock), in label order. Rear view is the mirror.
+const layoutCache={};
+const H=Math.sqrt(3)/2;
+function hexGrid(R){const g=[];for(let r=-R;r<=R;r++){const off=(Math.abs(r)%2)*0.5;for(let c=-R;c<=R;c++){const x=c+off,y=r*H,q=x-r/2;g.push({x,y,ring:(Math.abs(q)+Math.abs(r)+Math.abs(q+r))/2});}}return g;}
+function layout(n,mode,dir,start){
+  const key=[n,mode,dir,start].join("|"); if(layoutCache[key]) return layoutCache[key];
+  let pts;
+  const st=(Number(start)||0)*Math.PI/180, TAU=Math.PI*2;
+  const ang=p=>{let a=Math.atan2(p.x,-p.y); a=((a-st)%TAU+TAU)%TAU; if(dir==="ccw")a=(TAU-a)%TAU; return Math.round(a*1e6)/1e6;};
+  if(n===1) pts=[{x:0,y:0}];
+  else if(mode!=="rows"){
+    // concentric hex rings around a center contact: 1, 6, 12, 18, 24 …
+    const g=hexGrid(12).map(p=>({...p,a:ang(p)}));
+    g.sort((a,b)=>a.ring-b.ring||a.a-b.a);
+    pts=g.slice(0,n);
+  }else{
+    const base=hexGrid(16);
+    const centers=[{x:0,y:0},{x:0.5,y:0},{x:0.25,y:H/2},{x:0.5,y:H/3}];
+    let best=null;
+    centers.forEach(ct=>{
+      const s=base.map(p=>({x:p.x-ct.x,y:p.y-ct.y})).map(p=>({...p,d:Math.round(Math.hypot(p.x,p.y)*1e4)/1e4,a:Math.atan2(p.x,-p.y)}));
+      s.sort((a,b)=>a.d-b.d||a.a-b.a);
+      const gap=s[n].d-s[n-1].d;
+      if(!best||gap>best.gap+1e-6) best={gap,pts:s.slice(0,n)};
+    });
+    pts=best.pts;
+    const mx=pts.reduce((a,p)=>a+p.x,0)/n,my=pts.reduce((a,p)=>a+p.y,0)/n;
+    pts=pts.map(p=>({x:p.x-mx,y:p.y-my}));
+    pts.sort((a,b)=>(Math.round(a.y*10)-Math.round(b.y*10))||(a.x-b.x));
+  }
+  const maxr=Math.max(...pts.map(p=>Math.hypot(p.x,p.y)),0.001);
+  const k=n===1?20:Math.min(80/(maxr+0.55),34);
+  const out={pts:pts.map(p=>({x:p.x*k,y:p.y*k})),r:k*0.38};
+  layoutCache[key]=out; return out;
+}
+function plugLayout(p){const t=TPL[p.tpl];return layout(p.count,p.layout||(t&&t.layout)||"spiral",p.dir||"cw",p.start??211);}
+
+// ---------- State ----------
+const S={plugs:{},cur:null,key:"",show:"all",q:"",hl:null,db:null,dl:null,mode:"init"};
+const pending={}; const inflight={};
+let localTimer=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function deepMerge(a,b){const o={...(a||{})};for(const k in b){const v=b[k];o[k]=(v&&typeof v==="object"&&!Array.isArray(v))?deepMerge(o[k],v):v;}return o;}
+function effective(id){return pending[id]?deepMerge(S.plugs[id],pending[id]):S.plugs[id];}
+function curPlug(){return S.cur?effective(S.cur):null;}
+function pinData(p,label){return (p&&p.pins&&p.pins[label])||{};}
+function isUsed(d){return !!(d&&((d.w||"").trim()||(d.s||"").trim()||(d.d||"").trim()));}
+function wires(d){return (d.w||"").split(/[,;\s]+/).map(s=>s.trim()).filter(Boolean);}
+
+function setStatus(txt,cls){const el=$("status");el.textContent=txt;el.className="status "+(cls||"");}
+
+// ---------- Storage (Cloudflare Pages Function + D1) ----------
+const LKEY="pintrack.v1";
+const API="/api/pins/plugs";
+function getKey(){try{return localStorage.getItem(LKEY+".key")||"";}catch(e){return S.key||"";}}
+function setKey(k){S.key=k;try{if(k)localStorage.setItem(LKEY+".key",k);else localStorage.removeItem(LKEY+".key");}catch(e){}}
+class ApiError extends Error{constructor(status,msg){super(msg);this.status=status;}}
+async function api(path,method,body){
+  const r=await fetch(API+path,{method:method||"GET",headers:{"x-pin-key":S.key||getKey(),...(body?{"content-type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,cache:"no-store"});
+  let data={};try{data=await r.json();}catch(e){}
+  if(!r.ok) throw new ApiError(r.status,data.error||("Request failed ("+r.status+")"));
+  return data;
+}
+function handleApiError(e){
+  if(e.status===401){setKey("");askKey("That passcode didn't work. Enter it again.");return true;}
+  setStatus(e.message||"Offline — changes will retry","busy");return false;
+}
+
+function queuePatch(id,patch){
+  pending[id]=deepMerge(pending[id],patch);
+  setStatus("Saving…","busy");
+  clearTimeout(queuePatch["t"+id]);
+  queuePatch["t"+id]=setTimeout(()=>flush(id),900);
+}
+async function flush(id){
+  if(inflight[id]||!pending[id]) return;
+  const patch=pending[id]; inflight[id]=true;
+  try{
+    await api("/"+id,"PATCH",patch);
+    S.plugs[id]=deepMerge(S.plugs[id],patch);
+    if(pending[id]===patch) delete pending[id];
+    else pending[id]=subtract(pending[id],patch);
+    setStatus("Saved","ok");
+  }catch(e){
+    inflight[id]=false;
+    if(e.status===401){handleApiError(e);return;}
+    if(e.status===404){delete pending[id];setStatus("That plug was deleted elsewhere","busy");return;}
+    if(e.status===429||e.status===503){setStatus(e.message,"busy");return;}
+    setStatus("Save failed — retrying","busy");
+    setTimeout(()=>flush(id),4000+Math.random()*2000);
+    return;
+  }
+  inflight[id]=false;
+  if(pending[id]) flush(id);
+}
+function flushAll(){Object.keys(pending).forEach(id=>{clearTimeout(queuePatch["t"+id]);flush(id);});}
+function subtract(newer,sent){ // drop identical leaves already sent
+  const o={};for(const k in newer){const v=newer[k];if(v&&typeof v==="object"){const r=subtract(v,(sent||{})[k]||{});if(Object.keys(r).length)o[k]=r;}else if(!sent||sent[k]!==v)o[k]=v;}return o;
+}
+async function createPlug(doc){
+  const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  doc.created=Date.now();doc.pins={};
+  const r=await api("/"+id,"PUT",doc);
+  S.plugs[id]=r.plug||doc;
+  return id;
+}
+async function deletePlug(id){
+  await api("/"+id,"DELETE");
+  delete S.plugs[id]; delete pending[id];
+}
+
+// ---------- Rendering ----------
+function plugIds(){return Object.keys(S.plugs).sort((a,b)=>String(S.plugs[a].plugId||"").localeCompare(String(S.plugs[b].plugId||""),undefined,{numeric:true}));}
+function renderSelector(){
+  const sel=$("plugSel"); const ids=plugIds();
+  sel.innerHTML=ids.map(id=>{const p=effective(id);const t=TPL[p.tpl];return `<option value="${id}">${esc(p.plugId||"(no ID)")} · ${esc(t?t.arr:(p.count+" ct"))}${p.desc?" · "+esc(p.desc):""}</option>`;}).join("");
+  if(S.cur&&ids.includes(S.cur)) sel.value=S.cur;
+  const has=ids.length>0;
+  $("blank").hidden=has; $("mainArea").hidden=!has; $("btnDel").disabled=!has; $("btnExport").disabled=!has; sel.disabled=!has;
+  if(!has) sel.innerHTML=`<option>No plugs yet</option>`;
+}
+function arrText(p){const t=TPL[p.tpl];return t?`${t.short} ${t.arr} · ${p.count}${t.contact?" × "+t.contact:" contacts"}`:`Custom · ${p.count} contacts`;}
+
+let rowEls={};
+function buildPlug(){
+  const p=curPlug(); if(!p) return;
+  const L=labels(p.count,p.scheme);
+  ["plugId","part","loc","desc"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
+  $("m_arr").value=arrText(p);
+  const tb=$("rows"); rowEls={};
+  tb.innerHTML=L.map((lab,i)=>{const d=pinData(p,lab);return `<tr data-pin="${esc(lab)}">
+   <td class="pin"><span>${esc(lab)}</span></td>
+   <td class="w"><input id="r${i}_w" data-f="w" value="${esc(d.w)}" aria-label="Pin ${esc(lab)} wire IDs" autocomplete="off"></td>
+   <td><input id="r${i}_g" data-f="g" value="${esc(d.g)}" aria-label="Pin ${esc(lab)} AWG" autocomplete="off" inputmode="numeric"></td>
+   <td><input id="r${i}_s" data-f="s" value="${esc(d.s)}" aria-label="Pin ${esc(lab)} signal" autocomplete="off"></td>
+   <td><input id="r${i}_d" data-f="d" value="${esc(d.d)}" aria-label="Pin ${esc(lab)} destination" autocomplete="off"></td>
+   <td><input id="r${i}_n" data-f="n" value="${esc(d.n)}" aria-label="Pin ${esc(lab)} notes" autocomplete="off"></td></tr>`;}).join("")+`<tr class="empty-row" id="noRows" hidden><td colspan="6">No pins match this search.</td></tr>`;
+  tb.querySelectorAll("tr[data-pin]").forEach(tr=>rowEls[tr.dataset.pin]=tr);
+  buildFace();
+  refresh();
+}
+function syncInputs(){ // apply remote updates without stomping the field being typed in
+  const p=curPlug(); if(!p) return;
+  ["plugId","part","loc","desc"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
+  for(const lab in rowEls){const d=pinData(p,lab);rowEls[lab].querySelectorAll("input").forEach(inp=>{if(inp!==document.activeElement){const v=d[inp.dataset.f]||"";if(inp.value!==v)inp.value=v;}});}
+}
+let pinEls={};
+function faceSvg(p,L,pts,r,mirror,showTips){
+  const fs=Math.max(3.2,Math.min(r*0.95,9))*(L.some(l=>l.length>2)?0.8:1);
+  let s=`<circle r="108" fill="var(--shell)" stroke="var(--shell-edge)" stroke-width="1.5"/>`;
+  s+=`<circle r="96" fill="var(--sunk)" stroke="var(--shell-edge)" stroke-width="1"/>`;
+  s+=`<circle r="91" fill="var(--insert)" stroke="var(--insert-edge)" stroke-width="1.2"/>`;
+  s+=`<rect x="-7" y="-108" width="14" height="15" rx="1.5" fill="var(--sunk)" stroke="var(--shell-edge)" stroke-width="1"/>`;
+  s+=`<text x="0" y="-100" fill="var(--muted)" font-size="5.5" font-family="IBM Plex Mono, monospace" text-anchor="middle" dominant-baseline="central">KEY</text>`;
+  pts.forEach((pt,i)=>{const lab=L[i];const x=(pt.x*(mirror?-1:1)).toFixed(2),y=pt.y.toFixed(2);
+    s+=`<g class="pin-g" data-pin="${esc(lab)}" transform="translate(${x} ${y})"><circle class="ring" r="${(r+2.4).toFixed(2)}"/><circle class="body" r="${r.toFixed(2)}"/>${showTips?`<circle class="tip" r="${(r*0.28).toFixed(2)}" opacity=".9"/>`:""}${/^\d+$/.test(lab)&&Number(lab)%10===0?`<circle class="tenmark" r="${(r+1.3).toFixed(2)}" stroke-dasharray="${((r+1.3)*Math.PI*1.4).toFixed(2)} 99" transform="rotate(${mirror?-200:20})"/>`:""}<text font-size="${fs.toFixed(2)}">${esc(lab)}</text><title>Pin ${esc(lab)}</title></g>`;});
+  return s;
+}
+function buildFace(){
+  const p=curPlug(); const L=labels(p.count,p.scheme); const {pts,r}=plugLayout(p);
+  pinEls={};
+  [["faceMate",false,false],["faceRear",true,false]].forEach(([id,mir,tips])=>{
+    const svg=$(id); svg.innerHTML=faceSvg(p,L,pts,r,mir,tips);
+    svg.querySelectorAll(".pin-g").forEach(g=>(pinEls[g.dataset.pin]=pinEls[g.dataset.pin]||[]).push(g));
+  });
+  $("faceR").textContent=(p.insert==="pin"?"Pin insert":"Socket insert")+" · "+p.count+" contacts";
+  $("m_layout").value=p.layout||"spiral"; $("m_dir").value=p.dir||"cw"; $("m_start").value=String(p.start??211);
+  $("m_dir").disabled=$("m_start").disabled=(p.layout==="rows");
+}
+function matches(lab,d,q){if(!q)return true;const t=q.toLowerCase();return lab.toLowerCase()===t||[d.w,d.g,d.s,d.d,d.n].some(v=>(v||"").toLowerCase().includes(t));}
+function exactPin(p,q){if(!q)return null;const L=labels(p.count,p.scheme);if(L.includes(q))return q;const lo=L.filter(l=>l.toLowerCase()===q.toLowerCase());return lo.length===1?lo[0]:null;}
+function refresh(){
+  const p=curPlug(); if(!p) return;
+  const L=labels(p.count,p.scheme); const q=S.q.trim(); let used=0,visible=0;
+  const ex=exactPin(p,q);
+  L.forEach(lab=>{const d=pinData(p,lab);const u=isUsed(d);if(u)used++;
+    const m=ex?lab===ex:matches(lab,d,q);
+    const showRow=m&&(S.show==="all"||(S.show==="used"?u:!u));
+    const tr=rowEls[lab]; if(tr){tr.hidden=!showRow;tr.classList.toggle("used",u);} if(showRow)visible++;
+    (pinEls[lab]||[]).forEach(g=>{g.classList.toggle("used",u);g.classList.toggle("match",!!q&&m);g.classList.toggle("dim",!!q&&!m);});
+  });
+  $("noRows").hidden=visible>0;
+  $("plugTitle").textContent=p.plugId||"(no ID)";
+  $("plugCount").textContent=`${used} / ${p.count} wired`;
+  renderUsed(p,L);
+  applyHl();
+}
+function renderUsed(p,L){
+  const list=L.filter(l=>isUsed(pinData(p,l)));
+  $("usedCount").textContent=list.length?`${list.length} pins`:"";
+  $("usedList").innerHTML=list.length?list.map(l=>{const d=pinData(p,l);const ws=wires(d);
+    return `<li class="used-item" tabindex="0" data-pin="${esc(l)}"><span class="p">${esc(l)}</span><div><div class="chips">${ws.length?ws.map(w=>`<span class="chip">${esc(w)}</span>`).join(""):'<span class="sig">no wire ID</span>'}</div>${d.s||d.d?`<div class="sig">${esc(d.s||"")}${d.s&&d.d?" → ":""}${esc(d.d||"")}</div>`:""}</div></li>`;}).join(""):`<li class="none">No pins wired yet. Type a wire ID into any row and it appears here.</li>`;
+}
+function setHl(lab,scroll){S.hl=lab;applyHl(scroll);}
+function applyHl(scroll){
+  document.querySelectorAll(".pin-g.hl,tr.hl,.used-item.hl").forEach(e=>e.classList.remove("hl"));
+  const lab=S.hl; const p=curPlug();
+  if(!lab||!p||!rowEls[lab]){$("readout").innerHTML="Hover a contact or a row to inspect it.";return;}
+  (pinEls[lab]||[]).forEach(g=>{g.classList.add("hl");g.parentNode.appendChild(g);});
+  rowEls[lab].classList.add("hl");
+  const ui=document.querySelector(`.used-item[data-pin="${CSS.escape(lab)}"]`); if(ui) ui.classList.add("hl");
+  if(scroll==="row"){const tr=rowEls[lab];if(!tr.hidden)scrollWithin($("tblWrap"),tr);}
+  if(scroll==="row"&&ui) scrollWithin($("usedList"),ui);
+  const d=pinData(p,lab); const ws=wires(d);
+  $("readout").innerHTML=`<b>Pin ${esc(lab)}</b> · ${ws.length?`Wire <b>${ws.map(esc).join(", ")}</b>`:"open"}${d.g?` · ${esc(d.g)} AWG`:""}${d.s?`<br>${esc(d.s)}`:""}${d.d?` → ${esc(d.d)}`:""}${d.n?`<br><span>${esc(d.n)}</span>`:""}`;
+}
+function scrollWithin(box,el){const b=box.getBoundingClientRect(),e=el.getBoundingClientRect();const head=box.querySelector("thead");const top=b.top+(head?head.offsetHeight:0);
+  if(e.top<top) box.scrollTop-=top-e.top+4; else if(e.bottom>b.bottom) box.scrollTop+=e.bottom-b.bottom+4;}
+
+function selectPlug(id){
+  S.cur=id; S.hl=null;
+  try{localStorage.setItem(LKEY+".cur",id);}catch(e){}
+  renderSelector(); buildPlug();
+}
+
+// ---------- Events ----------
+$("plugSel").addEventListener("change",e=>selectPlug(e.target.value));
+$("rows").addEventListener("input",e=>{
+  const inp=e.target; if(!inp.dataset.f) return; const lab=inp.closest("tr").dataset.pin;
+  queuePatch(S.cur,{pins:{[lab]:{[inp.dataset.f]:inp.value}}});
+  refreshSoon();
+});
+let rT=null; function refreshSoon(){clearTimeout(rT);rT=setTimeout(()=>{refresh();},120);}
+$("rows").addEventListener("focusin",e=>{const tr=e.target.closest("tr[data-pin]");if(tr)setHl(tr.dataset.pin);});
+$("rows").addEventListener("mouseover",e=>{const tr=e.target.closest("tr[data-pin]");if(tr&&tr.dataset.pin!==S.hl)setHl(tr.dataset.pin);});
+$("rows").addEventListener("mouseleave",()=>{const a=document.activeElement.closest&&document.activeElement.closest("tr[data-pin]");setHl(a?a.dataset.pin:null);});
+["faceRear","faceMate"].forEach(id=>{const f=$(id);
+f.addEventListener("mouseover",e=>{const g=e.target.closest(".pin-g");if(g&&g.dataset.pin!==S.hl)setHl(g.dataset.pin,"row");});
+f.addEventListener("click",e=>{const g=e.target.closest(".pin-g");if(!g)return;const lab=g.dataset.pin;
+  if(rowEls[lab].hidden){S.q="";$("q").value="";S.show="all";setShowBtns();refresh();}
+  setHl(lab,"row");rowEls[lab].querySelector('input[data-f="w"]').focus({preventScroll:true});});});
+$("usedList").addEventListener("mouseover",e=>{const li=e.target.closest(".used-item");if(li&&li.dataset.pin!==S.hl)setHl(li.dataset.pin);});
+$("usedList").addEventListener("focusin",e=>{const li=e.target.closest(".used-item");if(li)setHl(li.dataset.pin,"row");});
+$("usedList").addEventListener("keydown",e=>{const li=e.target.closest(".used-item");if(!li)return;
+  if(e.key==="Enter"){e.preventDefault();rowEls[li.dataset.pin].querySelector('input[data-f="w"]').focus();}
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();const n=e.key==="ArrowDown"?li.nextElementSibling:li.previousElementSibling;if(n&&n.focus)n.focus();}});
+$("usedList").addEventListener("click",e=>{const li=e.target.closest(".used-item");if(li){setHl(li.dataset.pin,"row");rowEls[li.dataset.pin].querySelector('input[data-f="w"]').focus({preventScroll:true});}});
+$("q").addEventListener("input",e=>{S.q=e.target.value;refresh();const p=curPlug();const ex=p&&exactPin(p,S.q.trim());if(ex)setHl(ex,"row");});
+$("q").addEventListener("keydown",e=>{if(e.key!=="Enter")return;e.preventDefault();const p=curPlug();if(!p)return;
+  const ex=exactPin(p,S.q.trim());const target=ex||Object.keys(rowEls).find(l=>!rowEls[l].hidden);
+  if(target){setHl(target,"row");rowEls[target].querySelector('input[data-f="w"]').focus();}});
+function setShowBtns(){document.querySelectorAll("[data-show]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.show===S.show)));}
+document.querySelectorAll("[data-show]").forEach(b=>b.addEventListener("click",()=>{S.show=b.dataset.show;setShowBtns();refresh();}));
+["layout","dir","start"].forEach(k=>$("m_"+k).addEventListener("change",e=>{const v=k==="start"?Number(e.target.value):e.target.value;queuePatch(S.cur,{[k]:v});buildFace();refresh();}));
+["plugId","part","loc","desc"].forEach(k=>$("m_"+k).addEventListener("input",e=>{queuePatch(S.cur,{[k]:e.target.value});
+  if(k==="plugId"||k==="desc"){clearTimeout(renderSelector.t);renderSelector.t=setTimeout(()=>{renderSelector();$("plugTitle").textContent=e.target.value||"(no ID)";},250);}}));
+
+// New plug dialog
+function fillTpl(){
+  $("n_tpl").innerHTML=FAMILIES.map(f=>`<optgroup label="${esc(f.fam)}">${f.items.map(([a,n])=>`<option value="${f.id}:${a}">${esc(a)} — ${n} contacts</option>`).join("")}</optgroup>`).join("")+`<optgroup label="Other"><option value="custom">Custom contact count…</option></optgroup>`;
+  $("n_tpl").value=DEFAULT_TPL;
+}
+function tplInfo(){
+  const v=$("n_tpl").value; const c=v==="custom";
+  $("n_customWrap").hidden=!c; $("n_schemeWrap").hidden=!c;
+  const t=TPL[v];
+  $("n_info").textContent=(c?"Contacts are hex-packed, numbered from the center outward. Choose numbers or letters to match the insert.":`${t.fam}. ${t.arr}: ${t.count}${t.contact?" × "+t.contact:""} contacts, labeled ${t.scheme==="num"?"1–"+t.count:"A, B, C… (I, O, Q skipped)"}.`)+" Spiral direction and starting position can be adjusted after you create it.";
+}
+function openNew(){$("newForm").reset();fillTpl();tplInfo();$("n_err").textContent="";$("newDlg").hidden=false;$("n_id").focus();}
+$("btnNew").addEventListener("click",openNew); $("btnNew2").addEventListener("click",openNew);
+$("n_tpl").addEventListener("change",tplInfo);
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>b.closest(".overlay").hidden=true));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".overlay").forEach(o=>{if(o.id!=="keyDlg")o.hidden=true;});});
+$("newForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const pid=$("n_id").value.trim(); if(!pid){$("n_err").textContent="Enter a plug ID, such as P204 or J12.";$("n_id").focus();return;}
+  if(Object.values(S.plugs).some(p=>(p.plugId||"").toLowerCase()===pid.toLowerCase())){$("n_err").textContent=`A plug named ${pid} already exists. Pick it from the Plug list or use a different ID.`;return;}
+  const v=$("n_tpl").value; let count,scheme;
+  if(v==="custom"){count=Math.max(1,Math.min(200,parseInt($("n_count").value,10)||0));scheme=$("n_scheme").value;}
+  else{count=TPL[v].count;scheme=TPL[v].scheme;}
+  const doc={plugId:pid,part:$("n_part").value.trim(),loc:$("n_loc").value.trim(),desc:$("n_desc").value.trim(),tpl:v,count,scheme,insert:$("n_insert").value,layout:v==="custom"?"spiral":TPL[v].layout,dir:"cw",start:211};
+  try{const id=await createPlug(doc);$("newDlg").hidden=true;selectPlug(id);}
+  catch(err){if(err.status===401){$("newDlg").hidden=true;handleApiError(err);return;}$("n_err").textContent=err.status===409?"That plug already exists. Reload the page to see it.":(err.message||"Couldn't save the plug. Check your connection and try again.");}
+});
+// Delete
+$("btnDel").addEventListener("click",()=>{const p=curPlug();if(!p)return;$("delMsg").textContent=`Delete ${p.plugId||"this plug"} and all ${Object.keys(p.pins||{}).length} pin entries? This can't be undone. Export a CSV first if you want a record.`;$("delDlg").hidden=false;});
+$("delYes").addEventListener("click",async()=>{const id=S.cur;try{await deletePlug(id);$("delDlg").hidden=true;const ids=plugIds();S.cur=ids[0]||null;renderSelector();if(S.cur)buildPlug();}catch(e){$("delMsg").textContent=e.message||"Couldn't delete the plug. Try again.";}});
+// Export
+function csvFor(p){const L=labels(p.count,p.scheme);const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[["Plug ID","Part number","Arrangement","Location","Pin","Wire IDs","AWG","Signal","Destination","Notes"]];
+  L.forEach(l=>{const d=pinData(p,l);rows.push([p.plugId,p.part,arrText(p),p.loc,l,d.w,d.g,d.s,d.d,d.n]);});
+  return rows.map(r=>r.map(q).join(",")).join("\n");}
+$("btnExport").addEventListener("click",async()=>{const p=curPlug();if(!p)return;const csv=csvFor(p);const fn=(p.plugId||"plug").replace(/[^\w.-]+/g,"_")+"_pins.csv";
+  try{const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));const a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);return;}catch(e){}
+  $("csvText").value=csv;$("csvMsg").textContent=fn;$("csvDlg").hidden=false;});
+$("csvCopy").addEventListener("click",()=>{const t=$("csvText");navigator.clipboard.writeText(t.value).then(()=>$("csvMsg").textContent="Copied to clipboard").catch(()=>{t.focus();t.select();$("csvMsg").textContent="Selected — press Ctrl/⌘+C";});});
+
+// ---------- Boot ----------
+function pickInitial(){const ids=plugIds();let c=null;try{c=localStorage.getItem(LKEY+".cur");}catch(e){}return ids.includes(c)?c:(ids[0]||null);}
+async function load(){
+  if(Object.keys(pending).length) return; // don't overwrite unsaved edits
+  setStatus("Loading…","busy");
+  try{
+    const r=await api("","GET");
+    const prevCur=S.cur; const old=S.plugs[prevCur];
+    S.plugs=r.plugs||{};
+    const nu=S.plugs[prevCur];
+    if(!prevCur||!nu){S.cur=pickInitial();renderSelector();if(S.cur)buildPlug();}
+    else{renderSelector();if(!old||nu.count!==old.count||nu.layout!==old.layout||nu.dir!==old.dir||nu.start!==old.start)buildPlug();else{syncInputs();refresh();}}
+    setStatus("Up to date","ok");
+  }catch(e){ if(!handleApiError(e)) setStatus(e.message||"Can't reach the server","busy"); }
+}
+function askKey(msg){
+  $("keyErr").textContent=msg||"";$("keyDlg").hidden=false;$("keyIn").value="";$("keyIn").focus();
+}
+$("keyForm").addEventListener("submit",e=>{e.preventDefault();const k=$("keyIn").value.trim();if(!k){$("keyErr").textContent="Enter the passcode.";return;}setKey(k);$("keyDlg").hidden=true;load();});
+$("btnLock").addEventListener("click",()=>{flushAll();setKey("");S.plugs={};S.cur=null;renderSelector();askKey("");setStatus("Locked","");});
+// refresh when you come back to the tab, so another device's edits show up (one request)
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S.key&&!Object.keys(pending).length)load();
+  if(document.visibilityState==="hidden")flushAll();});
+window.addEventListener("pagehide",flushAll);
+function boot(){
+  renderSelector();
+  S.key=getKey();
+  if(!S.key){setStatus("Locked","");askKey("");return;}
+  load();
+}
+boot();
+})();
+</script>
+</body>
+</html>
