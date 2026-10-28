@@ -52,12 +52,18 @@ h1 span{color:var(--accent)}
 .status{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--panel);white-space:nowrap}
 .status.ok{color:var(--match);border-color:color-mix(in srgb,var(--match) 45%,var(--line))}
 .status.busy{color:var(--hl)}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.bar{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.bar-fields{display:flex;flex-wrap:wrap;gap:10px}
+.bar-fields .field{flex:1 1 240px}
+.bar-fields .plugfield{max-width:420px}
+.bar-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar-actions #btnDel{margin-left:auto}
+@media (max-width:640px){.bar-fields .plugfield{max-width:none}}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field label,.lbl{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 9px;min-width:0}
 input:focus,select:focus,textarea:focus,button:focus-visible,.used-item:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-select#plugSel{font-family:var(--f-mono);font-weight:600;min-width:200px}
+select#plugSel{font-family:var(--f-mono);font-weight:600;width:100%}
 button{font:inherit;font-weight:600;cursor:pointer;border-radius:5px;padding:7px 12px;border:1px solid var(--line);background:var(--sunk);color:var(--fg)}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 button.ghost{background:transparent}
@@ -91,7 +97,7 @@ tr.hl td{background:var(--hl-soft)}
 tr.hl td.pin span{background:var(--hl);color:#1d1404}
 col.c-w{width:22%} col.c-g{width:64px} col.c-s{width:22%} col.c-d{width:20%}
 td.w input{font-family:var(--f-mono)}
-.gfield{min-width:220px;max-width:420px}
+.gfield{min-width:0}
 .gfield input{font-family:var(--f-mono)}
 .glist{list-style:none;margin:0;padding:6px;max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:2px}
 .gitem{width:100%;display:grid;grid-template-columns:minmax(90px,auto) 52px minmax(0,1fr);gap:10px;align-items:start;text-align:left;background:transparent;border:0;border-radius:5px;padding:7px 8px;font-weight:400}
@@ -166,18 +172,22 @@ textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12p
   </header>
 
   <div class="bar">
-    <div class="field grow" style="max-width:340px">
-      <label for="plugSel">Plug</label>
-      <select id="plugSel"></select>
+    <div class="bar-fields">
+      <div class="field plugfield">
+        <label for="plugSel">Plug</label>
+        <select id="plugSel"></select>
+      </div>
+      <div class="field gfield">
+        <label for="gq">Find in all plugs</label>
+        <input id="gq" type="search" placeholder="Wire ID, signal or destination" autocomplete="off" aria-controls="gres">
+      </div>
     </div>
-    <button class="primary" id="btnNew" type="button">New plug</button>
-    <div class="field grow gfield">
-      <label for="gq">Find in all plugs</label>
-      <input id="gq" type="search" placeholder="Wire ID, signal or destination" autocomplete="off" aria-controls="gres">
+    <div class="bar-actions">
+      <button class="primary" id="btnNew" type="button">New plug</button>
+      <button type="button" id="btnExport">Export CSV</button>
+      <button type="button" class="ghost" id="btnLock" title="Forget the passcode on this device">Lock</button>
+      <button type="button" class="ghost danger" id="btnDel">Delete plug</button>
     </div>
-    <button type="button" id="btnExport">Export CSV</button>
-    <button type="button" class="ghost danger" id="btnDel">Delete plug</button>
-    <button type="button" class="ghost" id="btnLock" title="Forget the passcode on this device">Lock</button>
   </div>
 
   <section class="card gres" id="gres" hidden aria-live="polite">
