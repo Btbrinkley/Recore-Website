@@ -84,7 +84,7 @@ button:disabled{opacity:.5;cursor:default}
 .seg button[aria-pressed="true"]{background:var(--sunk);color:var(--fg);font-weight:600}
 .hint{font-size:12px;color:var(--muted)}
 .tbl-wrap{overflow:auto;max-height:68vh}
-table{border-collapse:collapse;width:100%;min-width:860px}
+table{border-collapse:collapse;width:100%;min-width:720px}
 thead th{position:sticky;top:0;background:var(--sunk);font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);z-index:1}
 tbody td{padding:3px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);vertical-align:middle}
 tbody td input{width:100%;border-color:transparent;background:transparent;padding:5px 6px;font-size:13px}
@@ -95,12 +95,7 @@ td.pin span{display:inline-block;min-width:34px;padding:2px 6px;border-radius:4p
 tr.used td.pin span{background:color-mix(in srgb,var(--gold) 35%,var(--sunk))}
 tr.hl td{background:var(--hl-soft)}
 tr.hl td.pin span{background:var(--hl);color:#1d1404}
-col.c-w{width:19%} col.c-m{width:17%} col.c-g{width:60px} col.c-s{width:18%} col.c-d{width:16%}
-td.m input{font-family:var(--f-mono)}
-td.m input::placeholder{color:var(--muted);opacity:.55;font-style:italic}
-tr.diff td.m input{color:var(--accent);font-weight:600}
-tr.diff td.pin span{box-shadow:inset 0 0 0 2px var(--accent)}
-.used-item .mate{color:var(--accent);font-family:var(--f-mono);font-size:12px;overflow-wrap:anywhere}
+col.c-w{width:22%} col.c-g{width:64px} col.c-s{width:22%} col.c-d{width:20%}
 td.w input{font-family:var(--f-mono)}
 .gfield{min-width:0}
 .gfield input{font-family:var(--f-mono)}
@@ -130,8 +125,6 @@ td.w input{font-family:var(--f-mono)}
 .pin-g.used text{fill:#1d1404;opacity:1}
 .pin-g.used circle.tip,.pin-g.hl circle.tip{display:none}
 .pin-g circle.tenmark{fill:none;stroke:var(--pin-ink);stroke-width:.9;opacity:.85}
-.pin-g.diff circle.ring{stroke:var(--accent);stroke-width:1.6}
-.pin-g.hl circle.ring{stroke:var(--hl);stroke-width:2.4}
 .pin-g.dim{opacity:.28}
 .pin-g.match circle.body{stroke:var(--match);stroke-width:1.6}
 .pin-g circle.ring{fill:none;stroke:var(--hl);stroke-width:0;transition:stroke-width .12s}
@@ -219,7 +212,6 @@ textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12p
         <div class="field"><label for="m_part">Part number</label><input id="m_part" autocomplete="off" placeholder="e.g. D38999/26WD35PN"></div>
         <div class="field"><label for="m_loc">Location / zone</label><input id="m_loc" autocomplete="off" placeholder="e.g. Sta 180, LH sidewall"></div>
         <div class="field"><label for="m_desc">Description</label><input id="m_desc" autocomplete="off" placeholder="What it connects"></div>
-        <div class="field"><label for="m_mate">Mates with</label><input id="m_mate" autocomplete="off" placeholder="Connector on the other side, e.g. P1401A"></div>
         <div class="field"><label>Arrangement</label><input id="m_arr" disabled></div>
         <div class="field"><label for="m_layout">Numbering</label><select id="m_layout"><option value="spiral">Spiral from center</option><option value="rows">Rows, top to bottom</option></select></div>
         <div class="field"><label for="m_dir">Spiral direction (from front)</label><select id="m_dir"><option value="cw">Clockwise</option><option value="ccw">Counter-clockwise</option></select></div>
@@ -231,13 +223,12 @@ textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12p
           <button type="button" data-show="all" aria-pressed="true">All</button>
           <button type="button" data-show="used" aria-pressed="false">Used</button>
           <button type="button" data-show="open" aria-pressed="false">Open</button>
-          <button type="button" data-show="diff" aria-pressed="false" title="Pins whose wire ID changes on the mating side">Changes</button>
         </div>
       </div>
       <div class="tbl-wrap" id="tblWrap">
         <table>
-          <colgroup><col><col class="c-w"><col class="c-m"><col class="c-g"><col class="c-s"><col class="c-d"><col></colgroup>
-          <thead><tr><th>Pin</th><th id="thWire">Wire ID(s)</th><th id="thMate" title="Leave blank when the wire keeps its ID through the connector">Mating side</th><th>AWG</th><th>Signal / function</th><th>Destination</th><th>Notes</th></tr></thead>
+          <colgroup><col><col class="c-w"><col class="c-g"><col class="c-s"><col class="c-d"><col></colgroup>
+          <thead><tr><th>Pin</th><th>Wire ID(s)</th><th>AWG</th><th>Signal / function</th><th>Destination</th><th>Notes</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -263,7 +254,6 @@ textarea.csv{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12p
           <span><i style="background:var(--gold)"></i>Wired</span>
           <span><i style="background:var(--hl)"></i>Selected</span>
           <span><i style="background:transparent;border:2px solid var(--match)"></i>Search match</span>
-          <span><i style="background:transparent;border:2px solid var(--accent)"></i>ID changes at mate</span>
         </div>
       </section>
       <section class="card" aria-label="Used pins">
@@ -390,10 +380,7 @@ function deepMerge(a,b){const o={...(a||{})};for(const k in b){const v=b[k];o[k]
 function effective(id){return pending[id]?deepMerge(S.plugs[id],pending[id]):S.plugs[id];}
 function curPlug(){return S.cur?effective(S.cur):null;}
 function pinData(p,label){return (p&&p.pins&&p.pins[label])||{};}
-function isUsed(d){return !!(d&&((d.w||"").trim()||(d.m||"").trim()||(d.s||"").trim()||(d.d||"").trim()));}
-const normIds=v=>(v||"").toLowerCase().split(/[,;\n]+/).map(x=>x.trim().replace(/\s+/g," ")).filter(Boolean).join(",");
-function isDiff(d){return !!(d&&normIds(d.m)&&normIds(d.m)!==normIds(d.w));}
-function mateHeads(p){$("thWire").textContent=p.mate?`${p.plugId||"This"} side`:"Wire ID(s)";$("thMate").textContent=p.mate?`${p.mate} side`:"Mating side";}
+function isUsed(d){return !!(d&&((d.w||"").trim()||(d.s||"").trim()||(d.d||"").trim()));}
 function wires(d){return (d.w||"").split(/[,;\n]+/).map(s=>s.trim().replace(/\s+/g," ")).filter(Boolean);}
 
 function setStatus(txt,cls){const el=$("status");el.textContent=txt;el.className="status "+(cls||"");}
@@ -474,25 +461,23 @@ let rowEls={};
 function buildPlug(){
   const p=curPlug(); if(!p) return;
   const L=labels(p.count,p.scheme);
-  ["plugId","part","loc","desc","mate"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
+  ["plugId","part","loc","desc"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
   $("m_arr").value=arrText(p);
   const tb=$("rows"); rowEls={};
   tb.innerHTML=L.map((lab,i)=>{const d=pinData(p,lab);return `<tr data-pin="${esc(lab)}">
    <td class="pin"><span>${esc(lab)}</span></td>
    <td class="w"><input id="r${i}_w" data-f="w" value="${esc(d.w)}" aria-label="Pin ${esc(lab)} wire IDs" autocomplete="off"></td>
-   <td class="m"><input id="r${i}_m" data-f="m" value="${esc(d.m)}" placeholder="same" aria-label="Pin ${esc(lab)} mating-side wire IDs, if different" autocomplete="off"></td>
    <td><input id="r${i}_g" data-f="g" value="${esc(d.g)}" aria-label="Pin ${esc(lab)} AWG" autocomplete="off" inputmode="numeric"></td>
    <td><input id="r${i}_s" data-f="s" value="${esc(d.s)}" aria-label="Pin ${esc(lab)} signal" autocomplete="off"></td>
    <td><input id="r${i}_d" data-f="d" value="${esc(d.d)}" aria-label="Pin ${esc(lab)} destination" autocomplete="off"></td>
-   <td><input id="r${i}_n" data-f="n" value="${esc(d.n)}" aria-label="Pin ${esc(lab)} notes" autocomplete="off"></td></tr>`;}).join("")+`<tr class="empty-row" id="noRows" hidden><td colspan="7">No pins match this search.</td></tr>`;
+   <td><input id="r${i}_n" data-f="n" value="${esc(d.n)}" aria-label="Pin ${esc(lab)} notes" autocomplete="off"></td></tr>`;}).join("")+`<tr class="empty-row" id="noRows" hidden><td colspan="6">No pins match this search.</td></tr>`;
   tb.querySelectorAll("tr[data-pin]").forEach(tr=>rowEls[tr.dataset.pin]=tr);
-  mateHeads(p);
   buildFace();
   refresh();
 }
 function syncInputs(){ // apply remote updates without stomping the field being typed in
   const p=curPlug(); if(!p) return;
-  ["plugId","part","loc","desc","mate"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
+  ["plugId","part","loc","desc"].forEach(k=>{const el=$("m_"+k);if(document.activeElement!==el)el.value=p[k]||"";});
   for(const lab in rowEls){const d=pinData(p,lab);rowEls[lab].querySelectorAll("input").forEach(inp=>{if(inp!==document.activeElement){const v=d[inp.dataset.f]||"";if(inp.value!==v)inp.value=v;}});}
 }
 let pinEls={};
@@ -518,20 +503,19 @@ function buildFace(){
   $("m_layout").value=p.layout||"spiral"; $("m_dir").value=p.dir||"cw"; $("m_start").value=String(p.start??211);
   $("m_dir").disabled=$("m_start").disabled=(p.layout==="rows");
 }
-function matches(lab,d,q){if(!q)return true;const t=q.toLowerCase();return lab.toLowerCase()===t||[d.w,d.m,d.g,d.s,d.d,d.n].some(v=>(v||"").toLowerCase().includes(t));}
+function matches(lab,d,q){if(!q)return true;const t=q.toLowerCase();return lab.toLowerCase()===t||[d.w,d.g,d.s,d.d,d.n].some(v=>(v||"").toLowerCase().includes(t));}
 function exactPin(p,q){if(!q)return null;const L=labels(p.count,p.scheme);if(L.includes(q))return q;const lo=L.filter(l=>l.toLowerCase()===q.toLowerCase());return lo.length===1?lo[0]:null;}
 function refresh(){
   const p=curPlug(); if(!p) return;
   const L=labels(p.count,p.scheme); const q=S.q.trim(); let used=0,visible=0;
   const ex=exactPin(p,q);
-  L.forEach(lab=>{const d=pinData(p,lab);const u=isUsed(d);const df=isDiff(d);if(u)used++;
+  L.forEach(lab=>{const d=pinData(p,lab);const u=isUsed(d);if(u)used++;
     const m=ex?lab===ex:matches(lab,d,q);
-    const showRow=m&&(S.show==="all"||(S.show==="used"?u:S.show==="diff"?df:!u));
-    const tr=rowEls[lab]; if(tr){tr.hidden=!showRow;tr.classList.toggle("used",u);tr.classList.toggle("diff",df);} if(showRow)visible++;
-    (pinEls[lab]||[]).forEach(g=>{g.classList.toggle("used",u);g.classList.toggle("diff",df);g.classList.toggle("match",!!q&&m);g.classList.toggle("dim",!!q&&!m);});
+    const showRow=m&&(S.show==="all"||(S.show==="used"?u:!u));
+    const tr=rowEls[lab]; if(tr){tr.hidden=!showRow;tr.classList.toggle("used",u);} if(showRow)visible++;
+    (pinEls[lab]||[]).forEach(g=>{g.classList.toggle("used",u);g.classList.toggle("match",!!q&&m);g.classList.toggle("dim",!!q&&!m);});
   });
   $("noRows").hidden=visible>0;
-  $("noRows").firstElementChild.textContent=S.show==="diff"&&!q?"No wire IDs change at the mating side on this plug.":"No pins match this search.";
   $("plugTitle").textContent=p.plugId||"(no ID)";
   $("plugCount").textContent=`${used} / ${p.count} wired`;
   renderUsed(p,L);
@@ -541,7 +525,7 @@ function renderUsed(p,L){
   const list=L.filter(l=>isUsed(pinData(p,l)));
   $("usedCount").textContent=list.length?`${list.length} pins`:"";
   $("usedList").innerHTML=list.length?list.map(l=>{const d=pinData(p,l);const ws=wires(d);
-    return `<li class="used-item" tabindex="0" data-pin="${esc(l)}"><span class="p">${esc(l)}</span><div><div class="chips">${ws.length?ws.map(w=>`<span class="chip">${esc(w)}</span>`).join(""):'<span class="sig">no wire ID</span>'}</div>${isDiff(d)?`<div class="mate">⇄ ${p.mate?esc(p.mate)+": ":"mating side: "}${esc(d.m)}</div>`:""}${d.s||d.d?`<div class="sig">${esc(d.s||"")}${d.s&&d.d?" → ":""}${esc(d.d||"")}</div>`:""}</div></li>`;}).join(""):`<li class="none">No pins wired yet. Type a wire ID into any row and it appears here.</li>`;
+    return `<li class="used-item" tabindex="0" data-pin="${esc(l)}"><span class="p">${esc(l)}</span><div><div class="chips">${ws.length?ws.map(w=>`<span class="chip">${esc(w)}</span>`).join(""):'<span class="sig">no wire ID</span>'}</div>${d.s||d.d?`<div class="sig">${esc(d.s||"")}${d.s&&d.d?" → ":""}${esc(d.d||"")}</div>`:""}</div></li>`;}).join(""):`<li class="none">No pins wired yet. Type a wire ID into any row and it appears here.</li>`;
 }
 function setHl(lab,scroll){S.hl=lab;applyHl(scroll);}
 function applyHl(scroll){
@@ -554,7 +538,7 @@ function applyHl(scroll){
   if(scroll==="row"){const tr=rowEls[lab];if(!tr.hidden)scrollWithin($("tblWrap"),tr);}
   if(scroll==="row"&&ui) scrollWithin($("usedList"),ui);
   const d=pinData(p,lab); const ws=wires(d);
-  $("readout").innerHTML=`<b>Pin ${esc(lab)}</b> · ${ws.length?`Wire <b>${ws.map(esc).join(", ")}</b>`:"open"}${d.g?` · ${esc(d.g)} AWG`:""}${isDiff(d)?`<br>⇄ ${p.mate?esc(p.mate)+" side":"Mating side"}: <b>${esc(d.m)}</b>`:""}${d.s?`<br>${esc(d.s)}`:""}${d.d?` → ${esc(d.d)}`:""}${d.n?`<br><span>${esc(d.n)}</span>`:""}`;
+  $("readout").innerHTML=`<b>Pin ${esc(lab)}</b> · ${ws.length?`Wire <b>${ws.map(esc).join(", ")}</b>`:"open"}${d.g?` · ${esc(d.g)} AWG`:""}${d.s?`<br>${esc(d.s)}`:""}${d.d?` → ${esc(d.d)}`:""}${d.n?`<br><span>${esc(d.n)}</span>`:""}`;
 }
 function scrollWithin(box,el){const b=box.getBoundingClientRect(),e=el.getBoundingClientRect();const head=box.querySelector("thead");const top=b.top+(head?head.offsetHeight:0);
   if(e.top<top) box.scrollTop-=top-e.top+4; else if(e.bottom>b.bottom) box.scrollTop+=e.bottom-b.bottom+4;}
@@ -566,7 +550,7 @@ function selectPlug(id){
 }
 
 // ---------- Search across all plugs ----------
-const GFIELDS=[["w","Wire"],["m","Mating side"],["s","Signal"],["d","Dest"],["n","Notes"],["g","AWG"]];
+const GFIELDS=[["w","Wire"],["s","Signal"],["d","Dest"],["n","Notes"],["g","AWG"]];
 function hiText(v,q){const i=v.toLowerCase().indexOf(q);if(i<0)return esc(v);return esc(v.slice(0,i))+"<mark>"+esc(v.slice(i,i+q.length))+"</mark>"+esc(v.slice(i+q.length));}
 function globalSearch(){
   const raw=$("gq").value.trim(); const q=raw.toLowerCase();
@@ -575,7 +559,7 @@ function globalSearch(){
   for(const id of plugIds()){const p=effective(id);const L=labels(p.count,p.scheme);
     for(const lab of L){const d=pinData(p,lab);
       const f=GFIELDS.filter(([k])=>(d[k]||"").toLowerCase().includes(q));
-      if(f.length) hits.push({id,p,lab,d,f,exact:[...wires(d),...wires({w:d.m})].some(w=>w.toLowerCase()===q)});}}
+      if(f.length) hits.push({id,p,lab,d,f,exact:wires(d).some(w=>w.toLowerCase()===q)});}}
   hits.sort((a,b)=>(b.exact-a.exact)||String(a.p.plugId).localeCompare(String(b.p.plugId),undefined,{numeric:true}));
   const shown=hits.slice(0,100);
   $("gcount").textContent=hits.length?`${hits.length} pin${hits.length===1?"":"s"}${hits.length>100?" · first 100 shown":""}`:"";
@@ -629,7 +613,7 @@ $("q").addEventListener("keydown",e=>{if(e.key!=="Enter")return;e.preventDefault
 function setShowBtns(){document.querySelectorAll("[data-show]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.show===S.show)));}
 document.querySelectorAll("[data-show]").forEach(b=>b.addEventListener("click",()=>{S.show=b.dataset.show;setShowBtns();refresh();}));
 ["layout","dir","start"].forEach(k=>$("m_"+k).addEventListener("change",e=>{const v=k==="start"?Number(e.target.value):e.target.value;queuePatch(S.cur,{[k]:v});buildFace();refresh();}));
-["plugId","part","loc","desc","mate"].forEach(k=>$("m_"+k).addEventListener("input",e=>{queuePatch(S.cur,{[k]:e.target.value});if(k==="mate"||k==="plugId"){mateHeads(curPlug());refreshSoon();}
+["plugId","part","loc","desc"].forEach(k=>$("m_"+k).addEventListener("input",e=>{queuePatch(S.cur,{[k]:e.target.value});
   if(k==="plugId"||k==="desc"){clearTimeout(renderSelector.t);renderSelector.t=setTimeout(()=>{renderSelector();$("plugTitle").textContent=e.target.value||"(no ID)";},250);}}));
 
 // New plug dialog
@@ -664,8 +648,8 @@ $("btnDel").addEventListener("click",()=>{const p=curPlug();if(!p)return;$("delM
 $("delYes").addEventListener("click",async()=>{const id=S.cur;try{await deletePlug(id);$("delDlg").hidden=true;const ids=plugIds();S.cur=ids[0]||null;renderSelector();if(S.cur)buildPlug();}catch(e){$("delMsg").textContent=e.message||"Couldn't delete the plug. Try again.";}});
 // Export
 function csvFor(p){const L=labels(p.count,p.scheme);const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const rows=[["Plug ID","Part number","Arrangement","Location","Mates with","Pin","Wire IDs","Mating-side wire IDs","ID changes at mate","AWG","Signal","Destination","Notes"]];
-  L.forEach(l=>{const d=pinData(p,l);const df=isDiff(d);rows.push([p.plugId,p.part,arrText(p),p.loc,p.mate,l,d.w,df?d.m:d.w,df?"Yes":"",d.g,d.s,d.d,d.n]);});
+  const rows=[["Plug ID","Part number","Arrangement","Location","Pin","Wire IDs","AWG","Signal","Destination","Notes"]];
+  L.forEach(l=>{const d=pinData(p,l);rows.push([p.plugId,p.part,arrText(p),p.loc,l,d.w,d.g,d.s,d.d,d.n]);});
   return rows.map(r=>r.map(q).join(",")).join("\n");}
 $("btnExport").addEventListener("click",async()=>{const p=curPlug();if(!p)return;const csv=csvFor(p);const fn=(p.plugId||"plug").replace(/[^\w.-]+/g,"_")+"_pins.csv";
   try{const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));const a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);return;}catch(e){}
