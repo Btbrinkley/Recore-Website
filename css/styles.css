@@ -120,3 +120,6 @@ p{margin:0 0 1em;color:var(--text-muted);}
 
 
 
+.video-figure{margin:36px 0 0;max-width:920px;}
+.video-figure video{width:100%;height:auto;aspect-ratio:16/9;display:block;background:#000;border-radius:var(--radius);border:1px solid var(--border);box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.video-figure figcaption{font-size:.82rem;color:var(--planned);margin-top:10px;}
